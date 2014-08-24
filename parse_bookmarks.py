@@ -145,7 +145,7 @@ class ChromiumBookmarks(object):
                                         bookmarks_json=self.bookmarks_json)
 
     @staticmethod
-    def reorganize_bookmarks(bookmarks):
+    def reorganize_by_date(bookmarks):
         """
         Reorganize bookmarks into date-based folders
 
@@ -209,8 +209,8 @@ class ChromiumBookmarks(object):
 
         return output
 
-    def reorganized(self):
-        return ChromiumBookmarks.reorganize_bookmarks(list(self))
+    def reorganized_by_date(self):
+        return ChromiumBookmarks.reorganize_by_date(list(self))
 
     @staticmethod
     def rewrite_bookmarks(bookmarks_path, dest=None, prompt=True):
@@ -218,7 +218,7 @@ class ChromiumBookmarks(object):
         if dest is None:
             dest = bookmarks_path
         bookmarks = list(iter_bookmarks(bookmarks_path))
-        output = reorganize_bookmarks(bookmarks)
+        output = reorganize_by_date(bookmarks)
 
         bookmarks_json = read_bookmarks(bookmarks_path)
         bookmarks_json.pop('checksum')
@@ -275,16 +275,16 @@ class Test_parse_bookmarks(unittest.TestCase):
         bookmarks = list(ChromiumBookmarks.iter_bookmarks(self.bookmarks_path))
         self.assertTrue(bookmarks)
 
-    def test_41_reorganize_bookmarks(self):
+    def test_41_reorganize_by_date(self):
         bookmarks = list(ChromiumBookmarks.iter_bookmarks(self.bookmarks_path))
-        output = ChromiumBookmarks.reorganize_bookmarks(bookmarks)
+        output = ChromiumBookmarks.reorganize_by_date(bookmarks)
         self.assertTrue(output)
         json_output = json.dumps(output, indent=2)
         self.assertTrue(json_output)
 
     def test_51_rewrite_bookmarks(self):
         bookmarks = list(ChromiumBookmarks.iter_bookmarks(self.bookmarks_path))
-        output = ChromiumBookmarks.reorganize_bookmarks(bookmarks)
+        output = ChromiumBookmarks.reorganize_by_date(bookmarks)
         self.assertTrue(output)
         bookmarks_json = ChromiumBookmarks.read_bookmarks(self.bookmarks_path)
         bookmarks_json.pop('checksum')
@@ -319,7 +319,7 @@ class Test_parse_bookmarks(unittest.TestCase):
         cb = ChromiumBookmarks(self.bookmarks_path)
         output = list(cb)
         self.assertTrue(output)
-        output = cb.reorganized()
+        output = cb.reorganized_by_date()
         self.assertTrue(output)
 
 
@@ -365,7 +365,7 @@ def main(*args):
         opts.bookmarks_path = args[0]
 
     cb = ChromiumBookmarks(opts.bookmarks_path)
-    output = cb.reorganized()
+    output = cb.reorganized_by_date()
     print(output)
     return 0
 
