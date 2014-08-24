@@ -7,6 +7,7 @@ parse_bookmarks
 
 import codecs
 import collections
+import functools
 import itertools
 import os
 import json
@@ -75,9 +76,9 @@ class Folder(
 
 class ChromiumBookmarks(object):
 
-    # def __init__(self, bookmarks_path):
-    #    self.bookmarks_path = bookmarks_path
-    #    self.bookmarks_json = self.read_bookmarks(self.bookmarks_path)
+    def __init__(self, bookmarks_path):
+       self.bookmarks_path = bookmarks_path
+       self.bookmarks_json = self.read_bookmarks(self.bookmarks_path)
 
     @staticmethod
     def read_bookmarks(path):
@@ -132,11 +133,16 @@ class ChromiumBookmarks(object):
 
 
     @classmethod
-    def iter_bookmarks(cls, bookmarks_path):
-        bookmarks_json = cls.read_bookmarks(bookmarks_path)
+    def iter_bookmarks(cls, bookmarks_path, bookmarks_json=None):
+        if bookmarks_json is None:
+            bookmarks_json = cls.read_bookmarks(bookmarks_path)
         return itertools.chain(
             cls.walk_bookmarks(bookmarks_json['roots']['bookmark_bar']),
             cls.walk_bookmarks(bookmarks_json['roots']['other']))
+
+    def __iter__(self):
+        return ChromiumBookmarks.iter_bookmarks(self.bookmarks_path,
+                                        bookmarks_json=self.bookmarks_json)
 
     @staticmethod
     def reorganize_bookmarks(bookmarks):
@@ -202,6 +208,9 @@ class ChromiumBookmarks(object):
             output.append(year_folder)
 
         return output
+
+    def reorganized(self):
+        return ChromiumBookmarks.reorganize_bookmarks(list(self))
 
     @staticmethod
     def rewrite_bookmarks(bookmarks_path, dest=None, prompt=True):
@@ -306,6 +315,13 @@ class Test_parse_bookmarks(unittest.TestCase):
         finally:
             sys.argv = __sys_argv
 
+    def test_91_chromium_bookmarks(self):
+        cb = ChromiumBookmarks(self.bookmarks_path)
+        output = list(cb)
+        self.assertTrue(output)
+        output = cb.reorganized()
+        self.assertTrue(output)
+
 
 def get_option_parser():
     import optparse
@@ -348,7 +364,9 @@ def main(*args):
     if len(args):
         opts.bookmarks_path = args[0]
 
-    ChromiumBookmarks.parse_bookmarks(opts.bookmarks_path)
+    cb = ChromiumBookmarks(opts.bookmarks_path)
+    output = cb.reorganized()
+    print(output)
     return 0
 
 
