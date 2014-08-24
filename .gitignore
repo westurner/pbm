@@ -3,3 +3,4 @@ Bookmarks.bak
 *.un~
 *.pyc
 .coverage
+testdata
