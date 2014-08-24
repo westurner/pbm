@@ -2,21 +2,30 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 """
-parse_bookmarks
+parse_bookmarks -- a tool for working with Chromium Bookmarks JSON
+
+Usage::
+
+    ./parse_bookmarks --print-all ./path/to/Bookmarks
+    ./parse_bookmarks --by-date ./path/to/Bookmarks
+    ./parse_bookmarks --overwrite ./path/to/Bookmarks
 """
 
 import codecs
 import collections
+import datetime
 import functools
 import itertools
+import logging
 import os
 import json
 
-import datetime
-DATETIME_CONST = 2**8 * 3**3 * 5**2 * 79 * 853
-
 from collections import namedtuple
 
+DATETIME_CONST = 2**8 * 3**3 * 5**2 * 79 * 853
+
+log = logging.getLogger()
+log.setLevel(logging.DEBUG)
 
 def longdate_to_datetime(t):
     if t is None:
@@ -184,21 +193,30 @@ class ChromiumBookmarks(object):
         output = []
         for year, by_year in bookmarks_by_day_month_year:
             year_folder = {
+                "type": "folder",
                 "id": ids.next(),
-                "name": year,
+                "name": str(year),
                 "children": [],
+                "date_added": "13053368494256041",
+                "date_modified": "0",
             }
             for month, by_day in by_year:
                 month_folder = {
+                    "type": "folder",
                     "id": ids.next(),
                     "name": '-'.join(str(s) for s in month),
                     "children": [],
+                    "date_added": "13053368494256041",
+                    "date_modified": "0",
                 }
                 for day, iterable in by_day:
                     day_folder = {
+                        "type": "folder",
                         "id": ids.next(),
                         "name": '-'.join(str(s) for s in day),
                         "children": [],
+                        "date_added": "13053368494256041",
+                        "date_modified": "0",
                     }
                     for b in iterable:
                         if b.type == 'url':
@@ -210,30 +228,47 @@ class ChromiumBookmarks(object):
         return output
 
     def reorganized_by_date(self):
-        return ChromiumBookmarks.reorganize_by_date(list(self))
+        return ChromiumBookmarks.reorganize_by_date(self)
 
     @staticmethod
-    def rewrite_bookmarks(bookmarks_path, dest=None, prompt=True):
-        raise NotImplementedError()
-        if dest is None:
-            dest = bookmarks_path
-        bookmarks = list(iter_bookmarks(bookmarks_path))
-        output = reorganize_by_date(bookmarks)
+    def rewrite_bookmarks_json(bookmarks_path, dest=None, prompt=True,
+                               func=reorganized_by_date):
+        bookmarks = list(ChromiumBookmarks.iter_bookmarks(bookmarks_path))
+        output = func(bookmarks)
 
-        bookmarks_json = read_bookmarks(bookmarks_path)
-        bookmarks_json.pop('checksum')
-        bookmarks_json['roots'].pop('other')
+        bookmarks_json = ChromiumBookmarks.read_bookmarks(bookmarks_path)
+        if 'checksum' in bookmarks_json:
+            bookmarks_json.pop('checksum')
         bookmarks_json['roots']['bookmark_bar']['children'] = output
+        bookmarks_json['roots']['other']['children'] = []
         output_json = json.dumps(bookmarks_json, indent=2)
         assert json.loads(output_json) == bookmarks_json
+        return output_json
 
-        # TODO: if os.exists, prompt
+    @staticmethod
+    def overwrite_bookmarks_json(data, bookmarks_path, prompt=True):
+        # TODO: if os.path.exists, prompt
 
-        with codecs.open(dest, 'w', encoding='utf8') as f:
-            f.write(output_json)
+        if os.path.exists(bookmarks_path):
+            log.info("bookmarks_path exists: %r" % bookmarks_path)
+            if prompt:
+                yesno = raw_input("Overwrite y/[n]: ").lower().strip()
+                if yesno not in ("y", "yes"):
+                    raise Exception()
+                    return False
 
-        bkp_file = bookmarks_json + '.bkp'
-        os.remove(bkp_file)
+        with codecs.open(bookmarks_path, 'w', encoding='utf8') as f:
+            f.write(data)
+
+        bkp_file = bookmarks_path + '.bak'
+        os.path.exists(bkp_file) and os.remove(bkp_file)
+        return True
+
+    def overwrite(self, dest=None, prompt=True):
+        if dest is None:
+            dest = self.bookmarks_path
+        output = ChromiumBookmarks.rewrite_bookmarks_json(self.bookmarks_path)
+        return ChromiumBookmarks.overwrite_bookmarks_json(output, self.bookmarks_path, prompt=prompt)
 
 
 import unittest
@@ -242,7 +277,7 @@ import unittest
 class Test_parse_bookmarks(unittest.TestCase):
 
     def setUp(self):
-        self.bookmarks_path = './Bookmarks'
+        self.bookmarks_path = './testdata/Bookmarks'
 
     def log(self, *args):
         print(args)
@@ -284,12 +319,11 @@ class Test_parse_bookmarks(unittest.TestCase):
 
     def test_51_rewrite_bookmarks(self):
         bookmarks = list(ChromiumBookmarks.iter_bookmarks(self.bookmarks_path))
-        output = ChromiumBookmarks.reorganize_by_date(bookmarks)
-        self.assertTrue(output)
-        bookmarks_json = ChromiumBookmarks.read_bookmarks(self.bookmarks_path)
-        bookmarks_json.pop('checksum')
-        bookmarks_json['roots'].pop('other')
-        bookmarks_json['roots']['bookmark_bar']['children'] = output
+        bookmarks_json = ChromiumBookmarks.rewrite_bookmarks_json(
+            self.bookmarks_path)
+        ChromiumBookmarks.overwrite_bookmarks_json(
+            bookmarks_json, self.bookmarks_path,
+            prompt=False)
         output_json = json.dumps(bookmarks_json, indent=2)
         self.assertTrue(json.loads(output_json), bookmarks_json)
 
@@ -310,7 +344,7 @@ class Test_parse_bookmarks(unittest.TestCase):
             # self.assertEqual(output, 0)
             # output = main('-t')
             # self.assertEqual(output, 0)
-            output = main('./Bookmarks')
+            output = main('./testdata/Bookmarks')
             self.assertEqual(output, 0)
         finally:
             sys.argv = __sys_argv
@@ -322,10 +356,30 @@ class Test_parse_bookmarks(unittest.TestCase):
         output = cb.reorganized_by_date()
         self.assertTrue(output)
 
+        output = cb.overwrite(prompt=False)
+        self.assertTrue(output)
+
 
 def get_option_parser():
     import optparse
-    prs = optparse.OptionParser(usage="%prog : args")
+    prs = optparse.OptionParser(usage="%prog : <-p|-d|-w> [options]")
+
+    prs.add_option('-p', '--print-all',
+                   dest='print_all',
+                   action='store_true')
+
+    prs.add_option('-d', '--by-date',
+                   dest='reorganized_by_date',
+                   action='store_true')
+
+    prs.add_option('-w', '--overwrite',
+                   dest='overwrite',
+                   action='store_true',
+                   help="Overwrite Bookmarks in place and rm Bookmarks.bak")
+    prs.add_option('--skip-prompt',
+                   dest='skip_prompt',
+                   action='store_true',
+                   help="Skip overwrite prompt")
 
     prs.add_option('-v', '--verbose',
                    dest='verbose',
@@ -365,8 +419,17 @@ def main(*args):
         opts.bookmarks_path = args[0]
 
     cb = ChromiumBookmarks(opts.bookmarks_path)
-    output = cb.reorganized_by_date()
-    print(output)
+
+    if opts.print_all:
+        for bookmark in cb:
+            print(bookmark)
+    if opts.reorganized_by_date:
+        output = cb.reorganized_by_date()
+        print(output)
+
+    if opts.overwrite:
+        cb.overwrite(prompt=(not opts.skip_prompt))
+
     return 0
 
 
