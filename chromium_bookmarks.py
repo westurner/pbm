@@ -2,19 +2,19 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 """
-parse_bookmarks -- a tool for working with Chromium Bookmarks JSON
+chromium_bookmarks -- a tool for working with Chromium Bookmarks JSON
 
 Usage::
 
-    ./parse_bookmarks --print-all ./path/to/Bookmarks
-    ./parse_bookmarks --by-date ./path/to/Bookmarks
-    ./parse_bookmarks --overwrite ./path/to/Bookmarks
+    ./chromium_bookmarks.py --print-all ./path/to/Bookmarks
+    ./chromium_bookmarks.py --by-date ./path/to/Bookmarks
+    ./chromium_bookmarks.py --overwrite ./path/to/Bookmarks
+
 """
 
 import codecs
 import collections
 import datetime
-import functools
 import itertools
 import logging
 import os
@@ -26,6 +26,7 @@ DATETIME_CONST = 2**8 * 3**3 * 5**2 * 79 * 853
 
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
+
 
 def longdate_to_datetime(t):
     if t is None:
@@ -82,23 +83,16 @@ class Folder(
                 node.get('date_modified')))
 
 
-
 class ChromiumBookmarks(object):
 
     def __init__(self, bookmarks_path):
-       self.bookmarks_path = bookmarks_path
-       self.bookmarks_json = self.read_bookmarks(self.bookmarks_path)
+        self.bookmarks_path = bookmarks_path
+        self.bookmarks_json = self.read_bookmarks(self.bookmarks_path)
 
     @staticmethod
     def read_bookmarks(path):
         with codecs.open(path, encoding='utf-8') as f:
             return json.load(f)
-
-    @staticmethod
-    def parse_bookmarks(bookmarks):
-        """
-        mainfunc
-        """
 
     @staticmethod
     def print_bookmarks(bookmarks):
@@ -140,7 +134,6 @@ class ChromiumBookmarks(object):
         elif _type == 'url':
             yield URL.from_url_node(node)
 
-
     @classmethod
     def iter_bookmarks(cls, bookmarks_path, bookmarks_json=None):
         if bookmarks_json is None:
@@ -150,8 +143,9 @@ class ChromiumBookmarks(object):
             cls.walk_bookmarks(bookmarks_json['roots']['other']))
 
     def __iter__(self):
-        return ChromiumBookmarks.iter_bookmarks(self.bookmarks_path,
-                                        bookmarks_json=self.bookmarks_json)
+        return ChromiumBookmarks.iter_bookmarks(
+            self.bookmarks_path,
+            bookmarks_json=self.bookmarks_json)
 
     @staticmethod
     def reorganize_by_date(bookmarks):
@@ -175,20 +169,23 @@ class ChromiumBookmarks(object):
         bookmarks_by_day = itertools.groupby(
             sorted(bookmarks, key=lambda x: x.date_added_),
             lambda x: (x.date_added_.year,
-                    x.date_added_.month,
-                    x.date_added_.day))
+                       x.date_added_.month,
+                       x.date_added_.day))
         bookmarks_by_day = [(x, list(iterable))
                             for (x, iterable) in bookmarks_by_day]
 
         bookmarks_by_day_month = itertools.groupby(bookmarks_by_day,
-                                                lambda x: x[0][:2])
+                                                   lambda x: x[0][:2])
         bookmarks_by_day_month = [(x, list(iterable))
-                                for (x, iterable) in bookmarks_by_day_month]
+                                  for (x, iterable) in bookmarks_by_day_month]
 
         bookmarks_by_day_month_year = itertools.groupby(bookmarks_by_day_month,
                                                         lambda x: x[0][0])
         bookmarks_by_day_month_year = [
-            (x, list(iterable)) for (x, iterable) in bookmarks_by_day_month_year]
+            (x,
+             list(iterable)) for (
+                x,
+                iterable) in bookmarks_by_day_month_year]
 
         output = []
         for year, by_year in bookmarks_by_day_month_year:
@@ -268,13 +265,16 @@ class ChromiumBookmarks(object):
         if dest is None:
             dest = self.bookmarks_path
         output = ChromiumBookmarks.rewrite_bookmarks_json(self.bookmarks_path)
-        return ChromiumBookmarks.overwrite_bookmarks_json(output, self.bookmarks_path, prompt=prompt)
+        return ChromiumBookmarks.overwrite_bookmarks_json(
+            output,
+            self.bookmarks_path,
+            prompt=prompt)
 
 
 import unittest
 
 
-class Test_parse_bookmarks(unittest.TestCase):
+class Test_chromium_bookmarks(unittest.TestCase):
 
     def setUp(self):
         self.bookmarks_path = './testdata/Bookmarks'
@@ -295,9 +295,9 @@ class Test_parse_bookmarks(unittest.TestCase):
         bookmarks = ChromiumBookmarks.read_bookmarks(self.bookmarks_path)
         self.assertTrue(bookmarks)
         bookmarks = itertools.chain(
-            ChromiumBookmarks.walk_bookmarks(bookmarks['roots']['bookmark_bar']),
-            ChromiumBookmarks.walk_bookmarks(bookmarks['roots']['other'])
-        )
+            ChromiumBookmarks.walk_bookmarks(
+                bookmarks['roots']['bookmark_bar']), ChromiumBookmarks.walk_bookmarks(
+                bookmarks['roots']['other']))
         bookmarks = list(bookmarks)
         length = len(bookmarks)
         self.log("n: %d" % length)
@@ -318,7 +318,6 @@ class Test_parse_bookmarks(unittest.TestCase):
         self.assertTrue(json_output)
 
     def test_51_rewrite_bookmarks(self):
-        bookmarks = list(ChromiumBookmarks.iter_bookmarks(self.bookmarks_path))
         bookmarks_json = ChromiumBookmarks.rewrite_bookmarks_json(
             self.bookmarks_path)
         ChromiumBookmarks.overwrite_bookmarks_json(
