@@ -24,33 +24,6 @@ def longdate_to_datetime(t):
     return datetime.datetime.utcfromtimestamp((t*1e-6)-DATETIME_CONST)
 
 
-def read_bookmarks(path):
-    with codecs.open(path, encoding='utf-8') as f:
-        return json.load(f)
-
-
-def parse_bookmarks(bookmarks):
-    """
-    mainfunc
-    """
-
-
-def print_bookmarks(bookmarks):
-    for x in bookmarks:
-        print(x)
-
-    for x in bookmarks['roots']:
-        print(x)
-        # synced, bookmark_bar, other
-
-    for x in bookmarks['roots']['bookmark_bar']:
-        print(x)
-
-    for x in bookmarks['roots']['bookmark_bar']['children']:
-        print(x)
-    return True
-
-
 class URL(
     namedtuple(
         'URL',
@@ -99,122 +72,159 @@ class Folder(
                 node.get('date_modified')))
 
 
-def walk_bookmarks(node):
-    """
-    Walk a Chromium Bookmarks(.json) recursively; yielding folders and urls
 
-    Args:
-        node (dict): dict to traverse (type:url|folder, children:[]])
+class ChromiumBookmarks(object):
 
-    Returns:
-        generator of (type: folder || url) dicts
-    """
-    _type = node.get('type')
-    if _type == 'folder':
-        yield Folder.from_folder_node(node)
-        for item in node['children']:
-            _item_type = item.get('type')
-            if _item_type == 'folder':
-                for b in walk_bookmarks(item):
-                    yield b
-            elif _item_type == 'url':
-                yield URL.from_url_node(item)
-    elif _type == 'url':
-        yield URL.from_url_node(node)
+    # def __init__(self, bookmarks_path):
+    #    self.bookmarks_path = bookmarks_path
+    #    self.bookmarks_json = self.read_bookmarks(self.bookmarks_path)
+
+    @staticmethod
+    def read_bookmarks(path):
+        with codecs.open(path, encoding='utf-8') as f:
+            return json.load(f)
+
+    @staticmethod
+    def parse_bookmarks(bookmarks):
+        """
+        mainfunc
+        """
+
+    @staticmethod
+    def print_bookmarks(bookmarks):
+        for x in bookmarks:
+            print(x)
+
+        for x in bookmarks['roots']:
+            print(x)
+            # synced, bookmark_bar, other
+
+        for x in bookmarks['roots']['bookmark_bar']:
+            print(x)
+
+        for x in bookmarks['roots']['bookmark_bar']['children']:
+            print(x)
+        return True
+
+    @staticmethod
+    def walk_bookmarks(node):
+        """
+        Walk a Chromium Bookmarks(.json) recursively; yielding folders and urls
+
+        Args:
+            node (dict): dict to traverse (type:url|folder, children:[]])
+
+        Returns:
+            generator of (type: folder || url) dicts
+        """
+        _type = node.get('type')
+        if _type == 'folder':
+            yield Folder.from_folder_node(node)
+            for item in node['children']:
+                _item_type = item.get('type')
+                if _item_type == 'folder':
+                    for b in ChromiumBookmarks.walk_bookmarks(item):
+                        yield b
+                elif _item_type == 'url':
+                    yield URL.from_url_node(item)
+        elif _type == 'url':
+            yield URL.from_url_node(node)
 
 
-def iter_bookmarks(bookmarks_path):
-    bookmarks_json = read_bookmarks(bookmarks_path)
-    return itertools.chain(
-        walk_bookmarks(bookmarks_json['roots']['bookmark_bar']),
-        walk_bookmarks(bookmarks_json['roots']['other']))
+    @classmethod
+    def iter_bookmarks(cls, bookmarks_path):
+        bookmarks_json = cls.read_bookmarks(bookmarks_path)
+        return itertools.chain(
+            cls.walk_bookmarks(bookmarks_json['roots']['bookmark_bar']),
+            cls.walk_bookmarks(bookmarks_json['roots']['other']))
 
+    @staticmethod
+    def reorganize_bookmarks(bookmarks):
+        """
+        Reorganize bookmarks into date-based folders
 
-def reorganize_bookmarks(bookmarks):
-    """
-    Reorganize bookmarks into date-based folders
+        2014
+        2014-08
+            2014-08-22
 
-    2014
-      2014-08
-        2014-08-22
+        Args:
+            bookmarks (iterable{}): iterable of Chromium Bookmarks JSON
 
-    Args:
-        bookmarks (iterable{}): iterable of Chromium Bookmarks JSON
+        Returns:
+            iterable{}: iterable of Chromium Bookmarks JSON
 
-    Returns:
-        iterable{}: iterable of Chromium Bookmarks JSON
+        """
+        id_max = max(int(b.id) for b in bookmarks)
+        ids = itertools.count(id_max + 1)
 
-    """
-    id_max = max(int(b.id) for b in bookmarks)
-    ids = itertools.count(id_max + 1)
+        bookmarks_by_day = itertools.groupby(
+            sorted(bookmarks, key=lambda x: x.date_added_),
+            lambda x: (x.date_added_.year,
+                    x.date_added_.month,
+                    x.date_added_.day))
+        bookmarks_by_day = [(x, list(iterable))
+                            for (x, iterable) in bookmarks_by_day]
 
-    bookmarks_by_day = itertools.groupby(
-        sorted(bookmarks, key=lambda x: x.date_added_),
-        lambda x: (x.date_added_.year,
-                   x.date_added_.month,
-                   x.date_added_.day))
-    bookmarks_by_day = [(x, list(iterable))
-                        for (x, iterable) in bookmarks_by_day]
+        bookmarks_by_day_month = itertools.groupby(bookmarks_by_day,
+                                                lambda x: x[0][:2])
+        bookmarks_by_day_month = [(x, list(iterable))
+                                for (x, iterable) in bookmarks_by_day_month]
 
-    bookmarks_by_day_month = itertools.groupby(bookmarks_by_day,
-                                               lambda x: x[0][:2])
-    bookmarks_by_day_month = [(x, list(iterable))
-                              for (x, iterable) in bookmarks_by_day_month]
+        bookmarks_by_day_month_year = itertools.groupby(bookmarks_by_day_month,
+                                                        lambda x: x[0][0])
+        bookmarks_by_day_month_year = [
+            (x, list(iterable)) for (x, iterable) in bookmarks_by_day_month_year]
 
-    bookmarks_by_day_month_year = itertools.groupby(bookmarks_by_day_month,
-                                                    lambda x: x[0][0])
-    bookmarks_by_day_month_year = [
-        (x, list(iterable)) for (x, iterable) in bookmarks_by_day_month_year]
-
-    output = []
-    for year, by_year in bookmarks_by_day_month_year:
-        year_folder = {
-            "id": ids.next(),
-            "name": year,
-            "children": [],
-        }
-        for month, by_day in by_year:
-            month_folder = {
+        output = []
+        for year, by_year in bookmarks_by_day_month_year:
+            year_folder = {
                 "id": ids.next(),
-                "name": '-'.join(str(s) for s in month),
+                "name": year,
                 "children": [],
             }
-            for day, iterable in by_day:
-                day_folder = {
+            for month, by_day in by_year:
+                month_folder = {
                     "id": ids.next(),
-                    "name": '-'.join(str(s) for s in day),
+                    "name": '-'.join(str(s) for s in month),
                     "children": [],
                 }
-                for b in iterable:
-                    if b.type == 'url':
-                        day_folder['children'].append(b.to_json())
-                month_folder['children'].append(day_folder)
-            year_folder['children'].append(month_folder)
-        output.append(year_folder)
+                for day, iterable in by_day:
+                    day_folder = {
+                        "id": ids.next(),
+                        "name": '-'.join(str(s) for s in day),
+                        "children": [],
+                    }
+                    for b in iterable:
+                        if b.type == 'url':
+                            day_folder['children'].append(b.to_json())
+                    month_folder['children'].append(day_folder)
+                year_folder['children'].append(month_folder)
+            output.append(year_folder)
 
-    return output
+        return output
 
+    @staticmethod
+    def rewrite_bookmarks(bookmarks_path, dest=None, prompt=True):
+        raise NotImplementedError()
+        if dest is None:
+            dest = bookmarks_path
+        bookmarks = list(iter_bookmarks(bookmarks_path))
+        output = reorganize_bookmarks(bookmarks)
 
-def rewrite_bookmarks(bookmarks_path, dest=None, prompt=True):
-    if dest is None:
-        dest = bookmarks_path
-    bookmarks = list(iter_bookmarks(bookmarks_path))
-    output = reorganize_bookmarks(bookmarks)
+        bookmarks_json = read_bookmarks(bookmarks_path)
+        bookmarks_json.pop('checksum')
+        bookmarks_json['roots'].pop('other')
+        bookmarks_json['roots']['bookmark_bar']['children'] = output
+        output_json = json.dumps(bookmarks_json, indent=2)
+        assert json.loads(output_json) == bookmarks_json
 
-    bookmarks_json = read_bookmarks(bookmarks_path)
-    bookmarks_json.pop('checksum')
-    bookmarks_json['roots'].pop('other')
-    bookmarks_json['roots']['bookmark_bar']['children'] = output
-    output_json = json.dumps(bookmarks_json, indent=2)
-    assert json.loads(output_json) == bookmarks_json
+        # TODO: if os.exists, prompt
 
-    # TODO: if os.exists, prompt
+        with codecs.open(dest, 'w', encoding='utf8') as f:
+            f.write(output_json)
 
-    with codecs.open(dest, 'w', encoding='utf8') as f:
-        f.write(output_json)
-
-    bkp_file = bookmarks_json + '.bkp'
-    os.remove(bkp_file)
+        bkp_file = bookmarks_json + '.bkp'
+        os.remove(bkp_file)
 
 
 import unittest
@@ -229,20 +239,20 @@ class Test_parse_bookmarks(unittest.TestCase):
         print(args)
 
     def test_11_read_bookmarks(self):
-        bookmarks = read_bookmarks(self.bookmarks_path)
+        bookmarks = ChromiumBookmarks.read_bookmarks(self.bookmarks_path)
         self.assertTrue(bookmarks)
 
     def a_test_21_print_bookmarks(self):
-        bookmarks = read_bookmarks(self.bookmarks_path)
-        output = print_bookmarks(bookmarks)
+        bookmarks = ChromiumBookmarks.read_bookmarks(self.bookmarks_path)
+        output = ChromiumBookmarks.print_bookmarks(bookmarks)
         self.assertTrue(output)
 
     def test_31_walk_bookmarks(self):
-        bookmarks = read_bookmarks(self.bookmarks_path)
+        bookmarks = ChromiumBookmarks.read_bookmarks(self.bookmarks_path)
         self.assertTrue(bookmarks)
         bookmarks = itertools.chain(
-            walk_bookmarks(bookmarks['roots']['bookmark_bar']),
-            walk_bookmarks(bookmarks['roots']['other'])
+            ChromiumBookmarks.walk_bookmarks(bookmarks['roots']['bookmark_bar']),
+            ChromiumBookmarks.walk_bookmarks(bookmarks['roots']['other'])
         )
         bookmarks = list(bookmarks)
         length = len(bookmarks)
@@ -253,21 +263,21 @@ class Test_parse_bookmarks(unittest.TestCase):
         self.assertFalse(duplicates)
 
     def test_33_iter_bookmarks(self):
-        bookmarks = list(iter_bookmarks(self.bookmarks_path))
+        bookmarks = list(ChromiumBookmarks.iter_bookmarks(self.bookmarks_path))
         self.assertTrue(bookmarks)
 
     def test_41_reorganize_bookmarks(self):
-        bookmarks = list(iter_bookmarks(self.bookmarks_path))
-        output = reorganize_bookmarks(bookmarks)
+        bookmarks = list(ChromiumBookmarks.iter_bookmarks(self.bookmarks_path))
+        output = ChromiumBookmarks.reorganize_bookmarks(bookmarks)
         self.assertTrue(output)
         json_output = json.dumps(output, indent=2)
         self.assertTrue(json_output)
 
     def test_51_rewrite_bookmarks(self):
-        bookmarks = list(iter_bookmarks(self.bookmarks_path))
-        output = reorganize_bookmarks(bookmarks)
+        bookmarks = list(ChromiumBookmarks.iter_bookmarks(self.bookmarks_path))
+        output = ChromiumBookmarks.reorganize_bookmarks(bookmarks)
         self.assertTrue(output)
-        bookmarks_json = read_bookmarks(self.bookmarks_path)
+        bookmarks_json = ChromiumBookmarks.read_bookmarks(self.bookmarks_path)
         bookmarks_json.pop('checksum')
         bookmarks_json['roots'].pop('other')
         bookmarks_json['roots']['bookmark_bar']['children'] = output
@@ -338,7 +348,7 @@ def main(*args):
     if len(args):
         opts.bookmarks_path = args[0]
 
-    parse_bookmarks(opts.bookmarks_path)
+    ChromiumBookmarks.parse_bookmarks(opts.bookmarks_path)
     return 0
 
 
