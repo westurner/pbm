@@ -166,8 +166,11 @@ class ChromiumBookmarks(object):
         id_max = max(int(b.id) for b in bookmarks)
         ids = itertools.count(id_max + 1)
 
+        bookmarks_iter = (b for b in bookmarks
+                          if not getattr(b, 'url','').startswith('chrome://'))
+
         bookmarks_by_day = itertools.groupby(
-            sorted(bookmarks, key=lambda x: x.date_added_),
+            sorted(bookmarks_iter, key=lambda x: x.date_added_),
             lambda x: (x.date_added_.year,
                        x.date_added_.month,
                        x.date_added_.day))
@@ -231,12 +234,33 @@ class ChromiumBookmarks(object):
     def rewrite_bookmarks_json(bookmarks_path, dest=None, prompt=True,
                                func=reorganized_by_date):
         bookmarks = list(ChromiumBookmarks.iter_bookmarks(bookmarks_path))
+
+        ids = itertools.count(len(bookmarks))
+
         output = func(bookmarks)
 
         bookmarks_json = ChromiumBookmarks.read_bookmarks(bookmarks_path)
         if 'checksum' in bookmarks_json:
             bookmarks_json.pop('checksum')
         bookmarks_json['roots']['bookmark_bar']['children'] = output
+        bookmarks_json['roots']['bookmark_bar']['children'].extend([
+            {
+                "url": "chrome://bookmarks/",
+                "type":'url',
+                "id": ids.next(),
+                "name": "Bookmarks",
+                "date_added": 0,
+                "date_modified": 0,
+            },
+            {
+                "url": "chrome://history/",
+                "type":'url',
+                "id": ids.next(),
+                "name": "History",
+                "date_added": 0,
+                "date_modified": 0,
+            },
+        ])
         bookmarks_json['roots']['other']['children'] = []
         output_json = json.dumps(bookmarks_json, indent=2)
         assert json.loads(output_json) == bookmarks_json
@@ -338,6 +362,8 @@ class Test_chromium_bookmarks(unittest.TestCase):
             output = main()
             self.assertEqual(output, 0)
             output = main('-v')
+            self.assertEqual(output, 0)
+            output = main('--print-all')
             self.assertEqual(output, 0)
             # output = main('-h')
             # self.assertEqual(output, 0)
