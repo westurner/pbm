@@ -25,17 +25,26 @@ Features
 
 * List Chrome and Chromium Bookmarks JSON files (``-l`` / ``-L``)
 * Print all bookmarks (``--print-all``)
-* Reorganize all bookmarks into the Bookmarks Bar
+* Reorganize all bookmarks into the Bookmarks Bar (``--overwrite``)
   
 
-* Default folders:
+Bookmarks Bar Folders
+~~~~~~~~~~~~~~~~~~~~~~~
 
-  * ``2014`` -- year, year-month, year-month-day folders
-  * ``bookmarklets`` -- bookmarklets (additions will be merged with a default
-    set)
-  * ``chrome`` -- select ``chrome://`` URLs
-  * ``quicklinks`` -- custom quicklinks (optional; will not be modified)
-  * ``queue`` -- default folder for new bookmarks
++------------------+-------------------------------------------------------------+
+|   Name           | Description                                                 |
++------------------+-------------------------------------------------------------+
+| yearly           | date-based folders: ``YYYY`` > ``YYYY-MM`` > ``YYYY-MM-DD`` |
++------------------+-------------------------------------------------------------+
+| ``bookmarklets`` | bookmarklets (additions will be merged with a default set)  |
++------------------+-------------------------------------------------------------+
+| ``chrome``       | select ``chrome://`` URLs                                   |
++------------------+-------------------------------------------------------------+
+| ``quicklinks``   | custom quicklinks (optional; copied as-is)                  |
++------------------+-------------------------------------------------------------+
+| ``queue``        | default folder for new bookmarks                            |
++------------------+-------------------------------------------------------------+
+
 
 Installation
 --------------
@@ -49,7 +58,7 @@ Development:
 
 .. code:: bash
 
-   pip install -e https://github.com/westurner/promiumbookmarks#egg=promiumbookmarks
+   pip install -e git+ssh://git@github.com/westurner/promiumbookmarks#egg=promiumbookmarks
 
 
 Usage
