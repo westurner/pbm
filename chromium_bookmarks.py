@@ -599,7 +599,7 @@ import unittest
 class Test_chromium_bookmarks(unittest.TestCase):
 
     def setUp(self):
-        self.bookmarks_path = './testdata/Bookmarks'
+        self.bookmarks_path = './tests/data/Bookmarks'
 
     def log(self, *args):
         print(args)
@@ -657,17 +657,17 @@ class Test_chromium_bookmarks(unittest.TestCase):
         __sys_argv = sys.argv
         sys.argv = [__file__]
         try:
-            output = main()
+            with self.assertRaises(IOError):
+                output = main()
+                self.assertEqual(output, 0)
+                output = main('-v')
+                self.assertEqual(output, 0)
+                output = main('--print-all')
+                self.assertEqual(output, 0)
+
+            output = main('-v', './tests/data/Bookmarks')
             self.assertEqual(output, 0)
-            output = main('-v')
-            self.assertEqual(output, 0)
-            output = main('--print-all')
-            self.assertEqual(output, 0)
-            # output = main('-h')
-            # self.assertEqual(output, 0)
-            # output = main('-t')
-            # self.assertEqual(output, 0)
-            output = main('./testdata/Bookmarks')
+            output = main('--print-all', './tests/data/Bookmarks')
             self.assertEqual(output, 0)
         finally:
             sys.argv = __sys_argv

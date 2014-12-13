@@ -1,6 +1,6 @@
-Bookmarks
-Bookmarks.bak
-*.un~
+
 *.pyc
 .coverage
-testdata
+
+
+Bookmarks*.bak
