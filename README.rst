@@ -23,9 +23,11 @@ Features
 
 * List Chrome and Chromium Bookmarks JSON files (``-l`` / ``-L``)
 * Print all bookmarks (``--print-all``)
-* Reorganize bookmarks into date-based folders in the Bookmarks Bar
-  (``--by-date``, ``--overwrite``)
-* Add default folders:
+* Reorganize all bookmarks into the Bookmarks Bar::
+
+  promiumbookmarks -d --overwrite ./path/to/Bookmarks  # e.g. a path from -l
+
+* Default folders:
 
   * ``2014`` -- year, year-month, year-month-day folders
   * ``bookmarklets`` -- Bookmarklets (will be merged with a default set)
