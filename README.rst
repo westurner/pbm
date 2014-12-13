@@ -16,6 +16,7 @@ promiumbookmarks works with Chrome and Chromium bookmarks JSON.
 
 * Free software: BSD license
 * Source: https://github.com/westurner/promiumbookmarks
+* PyPI: https://pypi.python.org/pypi/promiumbookmarks
 
 .. * Documentation: https://promiumbookmarks.readthedocs.org.
 
