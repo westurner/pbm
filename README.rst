@@ -32,7 +32,8 @@ Features
 * Default folders:
 
   * ``2014`` -- year, year-month, year-month-day folders
-  * ``bookmarklets`` -- Bookmarklets (will be merged with a default set)
-  * ``chrome`` -- Select ``chrome://`` URLs
-  * ``quicklinks`` -- Custom quicklinks (optional; will not be modified)
+  * ``bookmarklets`` -- bookmarklets (additions will be merged with a default
+    set)
+  * ``chrome`` -- select ``chrome://`` URLs
+  * ``quicklinks`` -- custom quicklinks (optional; will not be modified)
   * ``queue`` -- default folder for new bookmarks
