@@ -23,9 +23,11 @@ Features
 
 * List Chrome and Chromium Bookmarks JSON files (``-l`` / ``-L``)
 * Print all bookmarks (``--print-all``)
-* Reorganize all bookmarks into the Bookmarks Bar::
+* Reorganize all bookmarks into the Bookmarks Bar:
+  
+.. code:: bash
 
-  promiumbookmarks -d --overwrite ./path/to/Bookmarks  # e.g. a path from -l
+   promiumbookmarks -d --overwrite ./path/to/Bookmarks  # e.g. a path from -l
 
 * Default folders:
 
