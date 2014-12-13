@@ -19,7 +19,7 @@ test_requirements = [
 
 setup(
     name='promiumbookmarks',
-    version='0.2.3',
+    version='0.2.4',
     description=(
         'promiumbookmarks works with Chrome and Chromium bookmarks JSON.'),
     long_description=readme + '\n\n' + history,
@@ -35,7 +35,7 @@ setup(
     install_requires=requirements,
     license="BSD",
     zip_safe=False,
-    keywords='promiumbookmarks',
+    keywords='promiumbookmarks chrome chromium bookmarks',
     classifiers=[
         "Programming Language :: Python :: 2",
         'Development Status :: 4 - Beta',
