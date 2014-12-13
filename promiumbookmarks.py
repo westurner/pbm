@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 """
-chromium_bookmarks -- a tool to read, transform, and write Bookmarks JSON
+promiumbookmarks -- a tool to read, transform, and write Bookmarks JSON
 
 * Sort all bookmarks into date-based folders in the Bookmarks Bar
 * Add a 'Chrome' folder with links to Bookmarks, History, Extensions, Plugins
@@ -11,9 +11,9 @@ Usage:
 
 .. code:: bash
 
-    ./chromium_bookmarks.py --print-all ./path/to/Bookmarks
-    ./chromium_bookmarks.py --by-date ./path/to/Bookmarks
-    ./chromium_bookmarks.py --overwrite ./path/to/Bookmarks
+    ./promiumbookmarks.py --print-all ./path/to/Bookmarks
+    ./promiumbookmarks.py --by-date ./path/to/Bookmarks
+    ./promiumbookmarks.py --overwrite ./path/to/Bookmarks
 
 """
 
@@ -596,7 +596,7 @@ class ChromiumBookmarks(object):
 import unittest
 
 
-class Test_chromium_bookmarks(unittest.TestCase):
+class Test_promiumbookmarks(unittest.TestCase):
 
     def setUp(self):
         self.bookmarks_path = './tests/data/Bookmarks'
@@ -672,7 +672,7 @@ class Test_chromium_bookmarks(unittest.TestCase):
         finally:
             sys.argv = __sys_argv
 
-    def test_91_chromium_bookmarks(self):
+    def test_91_promiumbookmarks(self):
         cb = ChromiumBookmarks(self.bookmarks_path)
         output = list(cb)
         self.assertTrue(output)
