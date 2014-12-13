@@ -12,7 +12,7 @@ promiumbookmarks
         :target: https://pypi.python.org/pypi/promiumbookmarks
 
 
-promiumbookmarks works with Chromium bookmarks JSON.
+promiumbookmarks works with Chrome and Chromium bookmarks JSON.
 
 * Free software: BSD license
 * Source: https://github.com/westurner/promiumbookmarks
