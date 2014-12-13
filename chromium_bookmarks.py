@@ -188,17 +188,23 @@ class ChromiumBookmarks(object):
         Returns:
             bool: **False** to exclude this bookmark folder or url
         """
-        url = getattr(b, 'url', hasattr(b, 'get') and b.get('url','') or '')
-        if url.startswith('chrome://'):
-            return False
-        if url.startswith('javascript:'):
-            return False
-        if url.startswith('data:'):
-            return False
-        name = (getattr(b, 'name', hasattr(b, 'get')
-                        and b.get('name', '') or ''))
-        if name in ['chrome', 'bookmarklets', 'quicklinks']:
-            return False
+        type_ = getattr(b, 'type', hasattr(b, 'get') and b.get('type','') or '')
+        if type_ == 'url':
+            url = getattr(b, 'url', hasattr(b, 'get') and b.get('url','') or '')
+            if url.startswith('chrome://'):
+                return False
+            if url.startswith('javascript:'):
+                return False
+            if url.startswith('data:'):
+                return False
+        elif type_ == 'folder':
+            name = (getattr(b, 'name', hasattr(b, 'get')
+                            and b.get('name', '') or ''))
+            if name in ['chrome', 'bookmarklets', 'quicklinks']:
+                return False
+        else:
+            log.debug("Unknown type: %r" % type_)
+            return True
         return True
 
     @staticmethod
