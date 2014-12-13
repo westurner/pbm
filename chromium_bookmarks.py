@@ -21,9 +21,10 @@ import codecs
 import collections
 import datetime
 import itertools
+import json
 import logging
 import os
-import json
+import shutil
 
 from collections import namedtuple
 
@@ -116,37 +117,47 @@ class ChromiumBookmarks(object):
         return True
 
     @staticmethod
-    def walk_bookmarks(node):
+    def walk_bookmarks(node, filterfunc=None):
         """
         Walk a Chromium Bookmarks dict recursively; yielding folders and urls
 
         Args:
             node (dict): dict to traverse (type:url|folder, children:[]])
 
+        Keyword Arguments:
+            filterfunc (None, True, callable): default, all, True to include
+
         Yields:
             dict: (type: folder || url) dicts
         """
         _type = node.get('type')
         if _type == 'folder':
-            yield Folder.from_folder_node(node)
-            for item in node['children']:
-                _item_type = item.get('type')
-                if _item_type == 'folder':
-                    for b in ChromiumBookmarks.walk_bookmarks(item):
-                        yield b
-                elif _item_type == 'url':
-                    yield URL.from_url_node(item)
+            if (filterfunc not in (None, True) and filterfunc(node)) or True:
+                yield Folder.from_folder_node(node)
+                for item in node['children']:
+                    if not (item and hasattr(item, 'get') and 'type' in item):
+                        continue
+                    if filterfunc not in (None, True) and not filterfunc(item):
+                        continue
+                    _item_type = item.get('type')
+                    if _item_type == 'folder':
+                        for b in ChromiumBookmarks.walk_bookmarks(item):
+                            yield b
+                    elif _item_type == 'url':
+                        yield URL.from_url_node(item)
         elif _type == 'url':
             yield URL.from_url_node(node)
 
     @classmethod
-    def iter_bookmarks(cls, bookmarks_path, bookmarks_json=None):
+    def iter_bookmarks(cls, bookmarks_path, bookmarks_json=None,
+                       filterfunc=None):
         """
         Args:
             bookmarks_path (path): path to Chromium Bookmarks JSON to read first
 
         Keyword Arguments:
             bookmarks_json (dict): an already loaded bookmarks dict
+            filterfunc (None, True, callable): default, all, True to include
 
         Yields:
             iterable: chain(map(cls.walk_bookmarks, ['bookmarks_bar', 'other']))
@@ -154,8 +165,10 @@ class ChromiumBookmarks(object):
         if bookmarks_json is None:
             bookmarks_json = cls.read_bookmarks(bookmarks_path)
         return itertools.chain(
-            cls.walk_bookmarks(bookmarks_json['roots']['bookmark_bar']),
-            cls.walk_bookmarks(bookmarks_json['roots']['other']))
+            cls.walk_bookmarks(bookmarks_json['roots']['bookmark_bar'],
+                               filterfunc=filterfunc),
+            cls.walk_bookmarks(bookmarks_json['roots']['other'],
+                               filterfunc=filterfunc))
 
     def __iter__(self):
         """
@@ -171,12 +184,22 @@ class ChromiumBookmarks(object):
     def chrome_filterfunc(b):
         """
         Args:
-            b (dict): bookmark dict
+            b (object): a Folder, Url, or bookmark folder or url dict
         Returns:
-            bool: **False** if b.url.startswith('chrome://')
+            bool: **False** to exclude this bookmark folder or url
         """
-        return not getattr(b, 'url','').startswith('chrome://')
-
+        url = getattr(b, 'url', hasattr(b, 'get') and b.get('url','') or '')
+        if url.startswith('chrome://'):
+            return False
+        if url.startswith('javascript:'):
+            return False
+        if url.startswith('data:'):
+            return False
+        name = (getattr(b, 'name', hasattr(b, 'get')
+                        and b.get('name', '') or ''))
+        if name in ['chrome', 'bookmarklets', 'quicklinks']:
+            return False
+        return True
 
     @staticmethod
     def reorganize_by_date(bookmarks, filterfunc=None):
@@ -288,7 +311,11 @@ class ChromiumBookmarks(object):
         Returns:
             str: block of indented JSON
         """
-        bookmarks = list(ChromiumBookmarks.iter_bookmarks(bookmarks_path))
+        bookmarks = list(
+            ChromiumBookmarks.iter_bookmarks(
+                bookmarks_path,
+                filterfunc=ChromiumBookmarks.chrome_filterfunc
+        ))
 
         ids = itertools.count(len(bookmarks))
 
@@ -300,154 +327,206 @@ class ChromiumBookmarks(object):
 
         _quicklinks = [
             x for x in bookmarks_json['roots']['bookmark_bar']['children']
-                if x.get('name') == 'quicklinks']
+                if x and hasattr(x, 'get') and x.get('name') == 'quicklinks']
 
+        _bookmarklets_folders = [
+            x for x in bookmarks_json['roots']['bookmark_bar']['children']
+                if x and hasattr(x, 'name') and x.get('name') == 'bookmarklets']
+        if len(_bookmarklets_folders) > 1:
+            log.error("Found %d bookmarklets folders found. "
+                      "Taking the first and dropping subsequent folders."
+                      % len(_bookmarklets_folders))
+            _bookmarklets_folder = _bookmarklets_folders[0]
+        elif len(_bookmarklets_folders) == 1:
+            _bookmarklets_folder = _bookmarklets_folders[0]
+        else:
+            _bookmarklets_folder = None
+
+        # add the year, year-month, year-month-day date-based folders
         bookmarks_json['roots']['bookmark_bar']['children'] = output
 
-        # add chrome:// folder
-        bookmarks_json['roots']['bookmark_bar']['children'].extend(
-            ChromiumBookmarks.build_default_folders(ids))
-        bookmarks_json['roots']['bookmark_bar']['children'].extend(
-            _quicklinks)
+        # merge the 'bookmarklets' folder with the default set
+        bookmarks_json['roots']['bookmark_bar']['children'].append(
+            ChromiumBookmarks.build_bookmarklets_folder(
+                ids,
+                folder=_bookmarklets_folder))
+
+        # always overwrite the 'chrome' folder
+        bookmarks_json['roots']['bookmark_bar']['children'].append(
+            ChromiumBookmarks.build_chrome_folder(ids))
+
+        # if quicklinks folder[s] exist, copy them over
+        if _quicklinks:
+            bookmarks_json['roots']['bookmark_bar']['children'].extend(
+                _quicklinks)
+
+        # new bookmarks should default to the 'queue' folder
+        bookmarks_json['roots']['bookmark_bar']['children'].append(
+            {
+                "type": 'folder',
+                "id": ids.next(),
+                "name": "queue",
+                "date_added": 0,
+                "date_modified": 0,
+                "children": []})
+
+        # the 'Other Bookmarks' folder is now empty
         bookmarks_json['roots']['other']['children'] = []
+
         output_json = json.dumps(bookmarks_json, indent=2)
         assert json.loads(output_json) == bookmarks_json
         return output_json
 
     @staticmethod
-    def build_default_folders(ids):
-        return [
-            {
+    def build_bookmarklets_folder(ids, folder=None):
+        if folder is None:
+            folder = {
                 "type":'folder',
                 "id": ids.next(),
                 "name": "bookmarklets",
                 "date_added": 0,
                 "date_modified": 0,
-                "children": [
-                    {
-                        "url": 'data:text/html, <html style="font-family:Helvetica; background: #333; width: 400px; margin: 0 auto; color: white;" contenteditable><title>todo</title>==================<br>todo<br>==================<br>.',
-                        "type": 'url',
-                        "id": ids.next(),
-                        "name": "notetab",
-                        "date_added": 0,
-                        "date_modified": 0,
-                    },
-                    {
-                        "url": 'javascript:function iprl5()%7Bvar d%3Ddocument,z%3Dd.createElement(%27scr%27%2B%27ipt%27),b%3Dd.body,l%3Dd.location%3Btry%7Bif(!b)throw(0)%3Bz.setAttribute(%27src%27,%27https://dabble.me/cast/bookmarklet.js%3F%27%2B(new Date().getTime()))%3Bb.appendChild(z)%3B%7Dcatch(e)%7Balert(%27Please wait until the page has loaded.%27)%3B%7D%7Diprl5()%3Bvoid(0)',
-                        "type": 'url',
-                        "id": ids.next(),
-                        "name": "vidcast",
-                        "date_added": 0,
-                        "date_modified": 0
-                    },
-                    {
-                        "url": 'javascript:var i = document.createElement("iframe");i.src = window.location;i.setAttribute("width",window.innerWidth-20);i.setAttribute("height",window.innerHeight-20); i.style.position="fixed"; i.style.top=10; i.style.left=10; document.body.appendChild(i);',
-                        "type": 'url',
-                        "id": ids.next(),
-                        "name": "iframeify",
-                        "date_added": 0,
-                        "date_modified": 0
-                    }
-                ]
-            },
+                "children": []}
+
+        default_bookmarklets = [
             {
-                "type":'folder',
+                "url": 'data:text/html, <html style="font-family:Helvetica; background: #333; width: 400px; margin: 0 auto; color: white;" contenteditable><title>todo</title>==================<br>todo<br>==================<br>.',
+                "type": 'url',
                 "id": ids.next(),
-                "name": "chrome",
+                "name": "notetab",
                 "date_added": 0,
                 "date_modified": 0,
-                "children": [
-                    {
-                        "url": "chrome://bookmarks",
-                        "type":'url',
-                        "id": ids.next(),
-                        "name": "chrome://bookmarks",
-                        "date_added": 0,
-                        "date_modified": 0,
-                    },
-                    {
-                        "url": "chrome://history",
-                        "type":'url',
-                        "id": ids.next(),
-                        "name": "chrome://history",
-                        "date_added": 0,
-                        "date_modified": 0,
-                    },
-                    {
-                        "url": "chrome://extensions",
-                        "type":'url',
-                        "id": ids.next(),
-                        "name": "chrome://extensions",
-                        "date_added": 0,
-                        "date_modified": 0,
-                    },
-                    {
-                        "url": "chrome://plugins",
-                        "type":'url',
-                        "id": ids.next(),
-                        "name": "chrome://plugins",
-                        "date_added": 0,
-                        "date_modified": 0,
-                    },
-                    {
-                        "url": "chrome://flags",
-                        "type":'url',
-                        "id": ids.next(),
-                        "name": "chrome://flags",
-                        "date_added": 0,
-                        "date_modified": 0,
-                    },
-                    {
-                        "url": "chrome://settings",
-                        "type":'url',
-                        "id": ids.next(),
-                        "name": "chrome://settings",
-                        "date_added": 0,
-                        "date_modified": 0,
-                    },
-                    {
-                        "url": "chrome://flags",
-                        "type":'url',
-                        "id": ids.next(),
-                        "name": "chrome://flags",
-                        "date_added": 0,
-                        "date_modified": 0,
-                    },
-                    {
-                        "url": "chrome://apps",
-                        "type":'url',
-                        "id": ids.next(),
-                        "name": "chrome://apps",
-                        "date_added": 0,
-                        "date_modified": 0,
-                    },
-                    {
-                        "url": "chrome://downloads",
-                        "type":'url',
-                        "id": ids.next(),
-                        "name": "chrome://downloads",
-                        "date_added": 0,
-                        "date_modified": 0,
-                    },
-                    {
-                        "url": "chrome://chrome",
-                        "type":'url',
-                        "id": ids.next(),
-                        "name": "chrome://chrome",
-                        "date_added": 0,
-                        "date_modified": 0,
-                    },
-                    {
-                        "url": "chrome://chrome-urls",
-                        "type":'url',
-                        "id": ids.next(),
-                        "name": "chrome://chrome-urls",
-                        "date_added": 0,
-                        "date_modified": 0,
-                    },
-                ],
             },
+            {
+                "url": 'javascript:function iprl5()%7Bvar d%3Ddocument,z%3Dd.createElement(%27scr%27%2B%27ipt%27),b%3Dd.body,l%3Dd.location%3Btry%7Bif(!b)throw(0)%3Bz.setAttribute(%27src%27,%27https://dabble.me/cast/bookmarklet.js%3F%27%2B(new Date().getTime()))%3Bb.appendChild(z)%3B%7Dcatch(e)%7Balert(%27Please wait until the page has loaded.%27)%3B%7D%7Diprl5()%3Bvoid(0)',
+                "type": 'url',
+                "id": ids.next(),
+                "name": "vidcast",
+                "date_added": 0,
+                "date_modified": 0
+            },
+            {
+                "url": 'javascript:var i = document.createElement("iframe");i.src = window.location;i.setAttribute("width",window.innerWidth-20);i.setAttribute("height",window.innerHeight-20); i.style.position="fixed"; i.style.top=10; i.style.left=10; document.body.appendChild(i);',
+                "type": 'url',
+                "id": ids.next(),
+                "name": "iframeify",
+                "date_added": 0,
+                "date_modified": 0
+            }
         ]
+
+        if folder.get('children'):
+            keys = dict.fromkeys(
+                (url.get('type'), url.get('name'), url.get('url'))
+                for url in folder['children'])
+            for url in default_bookmarklets:
+                key = (url.get('type'), url.get('name'), url.get('url'))
+                if key not in keys:
+                    folder['children'].append(url)
+        else:
+            folder['children'] = default_bookmarklets
+        return folder
+
+
+    @staticmethod
+    def build_chrome_folder(ids):
+        return {
+            "type":'folder',
+            "id": ids.next(),
+            "name": "chrome",
+            "date_added": 0,
+            "date_modified": 0,
+            "children": [
+                {
+                    "url": "chrome://bookmarks",
+                    "type":'url',
+                    "id": ids.next(),
+                    "name": "chrome://bookmarks",
+                    "date_added": 0,
+                    "date_modified": 0,
+                },
+                {
+                    "url": "chrome://history",
+                    "type":'url',
+                    "id": ids.next(),
+                    "name": "chrome://history",
+                    "date_added": 0,
+                    "date_modified": 0,
+                },
+                {
+                    "url": "chrome://extensions",
+                    "type":'url',
+                    "id": ids.next(),
+                    "name": "chrome://extensions",
+                    "date_added": 0,
+                    "date_modified": 0,
+                },
+                {
+                    "url": "chrome://plugins",
+                    "type":'url',
+                    "id": ids.next(),
+                    "name": "chrome://plugins",
+                    "date_added": 0,
+                    "date_modified": 0,
+                },
+                {
+                    "url": "chrome://flags",
+                    "type":'url',
+                    "id": ids.next(),
+                    "name": "chrome://flags",
+                    "date_added": 0,
+                    "date_modified": 0,
+                },
+                {
+                    "url": "chrome://settings",
+                    "type":'url',
+                    "id": ids.next(),
+                    "name": "chrome://settings",
+                    "date_added": 0,
+                    "date_modified": 0,
+                },
+                {
+                    "url": "chrome://flags",
+                    "type":'url',
+                    "id": ids.next(),
+                    "name": "chrome://flags",
+                    "date_added": 0,
+                    "date_modified": 0,
+                },
+                {
+                    "url": "chrome://apps",
+                    "type":'url',
+                    "id": ids.next(),
+                    "name": "chrome://apps",
+                    "date_added": 0,
+                    "date_modified": 0,
+                },
+                {
+                    "url": "chrome://downloads",
+                    "type":'url',
+                    "id": ids.next(),
+                    "name": "chrome://downloads",
+                    "date_added": 0,
+                    "date_modified": 0,
+                },
+                {
+                    "url": "chrome://chrome",
+                    "type":'url',
+                    "id": ids.next(),
+                    "name": "chrome://chrome",
+                    "date_added": 0,
+                    "date_modified": 0,
+                },
+                {
+                    "url": "chrome://chrome-urls",
+                    "type":'url',
+                    "id": ids.next(),
+                    "name": "chrome://chrome-urls",
+                    "date_added": 0,
+                    "date_modified": 0,
+                },
+            ],
+        }
 
     @staticmethod
     def overwrite_bookmarks_json(data, bookmarks_path, prompt=True):
@@ -471,6 +550,11 @@ class ChromiumBookmarks(object):
                 if yesno not in ("y", "yes"):
                     raise Exception()
                     return False
+
+        bookmarks_bkp_path = "%s.%s.bkp" % (
+            bookmarks_path,
+            datetime.datetime.now().strftime("%FT%T%z"))
+        shutil.copy(bookmarks_path, bookmarks_bkp_path)
 
         with codecs.open(bookmarks_path, 'w', encoding='utf8') as f:
             f.write(data)
