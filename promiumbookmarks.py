@@ -20,6 +20,7 @@ Usage:
 import codecs
 import collections
 import datetime
+import glob
 import itertools
 import json
 import logging
@@ -593,6 +594,55 @@ class ChromiumBookmarks(object):
             prompt=prompt)
 
 
+def get_chromedir(platform):
+    if platform == 'darwin':
+        chromedir = os.path.expanduser(
+            '~/Library/Application Support/Google/Chrome')
+        return chromedir
+    else:
+        raise NotImplementedError("Unknown platform: %r" % platform)
+
+def get_chromiumdir(platform):
+    if platform == 'darwin':
+        chromedir = os.path.expanduser(
+            '~/Library/Application Support/Chromium')
+        return chromedir
+    else:
+        raise NotImplementedError("Unknown platform: %r" % platform)
+
+def list_profile_bookmarks(prefix=None, platform=None, show_backups=False):
+    """
+    List chromium Bookmark files
+
+    Keyword Arguments:
+        platform (str): default: sys.platform
+        show_backups (bool): if True, list 'Bookmarks*' else 'Bookmarks'
+
+    Yields:
+        str: Bookmarks path
+    """
+    if platform is None:
+        platform = sys.platform
+
+    if show_backups:
+        glob_suffix = '*' + os.path.sep + 'Bookmarks*'
+    else:
+        glob_suffix = '*' + os.path.sep + 'Bookmarks'
+
+    if prefix in (None, True):
+        chromedir = get_chromedir(platform)
+        chromiumdir = get_chromiumdir(platform)
+        dirs = [chromedir, chromiumdir]
+    else:
+        dirs = [prefix]
+    log.debug("Listing profile Bookmarks in: %r" % dirs)
+    for d in dirs:
+        _glob_pattern = d + os.path.sep + glob_suffix
+        for x in glob.glob(_glob_pattern):
+            yield x
+
+
+
 import unittest
 
 
@@ -603,6 +653,16 @@ class Test_promiumbookmarks(unittest.TestCase):
 
     def log(self, *args):
         print(args)
+
+    def test_01_list_bookmarks(self):
+        output = list_profile_bookmarks()
+        self.assertTrue(hasattr(output, '__iter__'))
+        output = list(output)
+        self.assertTrue(len(output))
+        output = list_profile_bookmarks(show_backups=True)
+        self.assertTrue(hasattr(output, '__iter__'))
+        output = list(output)
+        self.assertTrue(len(output))
 
     def test_11_read_bookmarks(self):
         bookmarks = ChromiumBookmarks.read_bookmarks(self.bookmarks_path)
@@ -685,7 +745,16 @@ class Test_promiumbookmarks(unittest.TestCase):
 
 def get_option_parser():
     import optparse
-    prs = optparse.OptionParser(usage="%prog : <-p|-d|-w> [options]")
+    prs = optparse.OptionParser(usage="%prog : [-l|-L] [-p|-d|-w] [options]")
+
+    prs.add_option('-l', '--list-bookmarks',
+                   help="List profiles with Bookmarks",
+                   dest='list_profile_bookmarks',
+                   action='store_true')
+    prs.add_option('-L', '--list-bookmarks-backups',
+                   help="List profiles with Bookmarks",
+                   dest='list_profile_bookmarks_show_backups',
+                   action='store_true')
 
     prs.add_option('-p', '--print-all',
                    dest='print_all',
@@ -736,6 +805,18 @@ def main(*args):
     if opts.run_tests:
         tp = unittest.main(exit=False, argv=[__file__])
         return not bool(tp.result)
+
+    if opts.list_profile_bookmarks:
+        for path in list_profile_bookmarks(opts.list_profile_bookmarks):
+            print(path)
+        return 0
+
+    if opts.list_profile_bookmarks_show_backups:
+        for path in list_profile_bookmarks(
+            opts.list_profile_bookmarks_show_backups,
+            show_backups=True):
+            print(path)
+        return 0
 
     opts.bookmarks_path = './Bookmarks'
     if len(args):
