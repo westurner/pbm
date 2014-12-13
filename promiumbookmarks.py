@@ -25,7 +25,9 @@ import itertools
 import json
 import logging
 import os
+import platform as _platform_
 import shutil
+import sys
 
 from collections import namedtuple
 
@@ -594,28 +596,75 @@ class ChromiumBookmarks(object):
             prompt=prompt)
 
 
-def get_chromedir(platform):
+def get_chromedir(platform, release):
+    """
+    Args:
+        platform (str): a sys.platform str
+
+    Returns:
+        str: path to Chrome User Data Directory
+
+    http://www.chromium.org/user-experience/user-data-directory
+    """
     if platform == 'darwin':
         chromedir = os.path.expanduser(
             '~/Library/Application Support/Google/Chrome')
         return chromedir
-    else:
-        raise NotImplementedError("Unknown platform: %r" % platform)
-
-def get_chromiumdir(platform):
-    if platform == 'darwin':
+    elif platform == 'linux':
         chromedir = os.path.expanduser(
-            '~/Library/Application Support/Chromium')
+             '~/.config/google-chrome/Default')
+        return chromedir
+    elif platform == 'win32':
+        if release == 'XP':
+            chromedir = os.path.expanduser(
+                '~\Local Settings\Application Data\Google\Chrome\User Data\Default')
+        else:
+            chromedir = os.path.expanduser(
+                '~\AppData\Local\Google\Chrome\User Data\Default')
         return chromedir
     else:
         raise NotImplementedError("Unknown platform: %r" % platform)
 
-def list_profile_bookmarks(prefix=None, platform=None, show_backups=False):
+
+def get_chromiumdir(platform, release):
+    """
+    Args:
+        platform (str): a sys.platform str
+
+    Returns:
+        str: path to Chromium User Data Directory
+
+    http://www.chromium.org/user-experience/user-data-directory
+    """
+    if platform == 'darwin':
+        chromedir = os.path.expanduser(
+            '~/Library/Application Support/Chromium')
+        return chromedir
+    elif platform == 'linux':
+        chromedir = os.path.expanduser(
+             '~/.config/chromium/Default')
+    elif platform == 'win32':
+        if release == 'XP':
+            chromedir = os.path.expanduser(
+                '~\Local Settings\Application Data\Chromium\User Data\Default')
+        else:
+            chromedir = os.path.expanduser(
+                '~\AppData\Local\Chromium\User Data\Default')
+        return chromedir
+    else:
+        raise NotImplementedError("Unknown platform: %r" % platform)
+
+
+def list_profile_bookmarks(prefix=None,
+                           platform=None,
+                           release=None,
+                           show_backups=False):
     """
     List chromium Bookmark files
 
     Keyword Arguments:
         platform (str): default: sys.platform
+        release (str): default: platform.release()
         show_backups (bool): if True, list 'Bookmarks*' else 'Bookmarks'
 
     Yields:
@@ -623,6 +672,8 @@ def list_profile_bookmarks(prefix=None, platform=None, show_backups=False):
     """
     if platform is None:
         platform = sys.platform
+    if release is None:
+        release = _platform_.release()
 
     if show_backups:
         glob_suffix = '*' + os.path.sep + 'Bookmarks*'
@@ -630,8 +681,8 @@ def list_profile_bookmarks(prefix=None, platform=None, show_backups=False):
         glob_suffix = '*' + os.path.sep + 'Bookmarks'
 
     if prefix in (None, True):
-        chromedir = get_chromedir(platform)
-        chromiumdir = get_chromiumdir(platform)
+        chromedir = get_chromedir(platform, release)
+        chromiumdir = get_chromiumdir(platform, release)
         dirs = [chromedir, chromiumdir]
     else:
         dirs = [prefix]
