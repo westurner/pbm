@@ -2,9 +2,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 """
-chromium_bookmarks -- a tool for working with Chromium Bookmarks JSON
+chromium_bookmarks -- a tool to read, transform, and write Bookmarks JSON
 
-Usage::
+* Sort all bookmarks into date-based folders in the Bookmarks Bar
+* Add a 'Chrome' folder with links to Bookmarks, History, Extensions, Plugins
+
+Usage:
+
+.. code:: bash
 
     ./chromium_bookmarks.py --print-all ./path/to/Bookmarks
     ./chromium_bookmarks.py --by-date ./path/to/Bookmarks
@@ -113,13 +118,13 @@ class ChromiumBookmarks(object):
     @staticmethod
     def walk_bookmarks(node):
         """
-        Walk a Chromium Bookmarks(.json) recursively; yielding folders and urls
+        Walk a Chromium Bookmarks dict recursively; yielding folders and urls
 
         Args:
             node (dict): dict to traverse (type:url|folder, children:[]])
 
-        Returns:
-            generator of (type: folder || url) dicts
+        Yields:
+            dict: (type: folder || url) dicts
         """
         _type = node.get('type')
         if _type == 'folder':
@@ -136,6 +141,16 @@ class ChromiumBookmarks(object):
 
     @classmethod
     def iter_bookmarks(cls, bookmarks_path, bookmarks_json=None):
+        """
+        Args:
+            bookmarks_path (path): path to Chromium Bookmarks JSON to read first
+
+        Keyword Arguments:
+            bookmarks_json (dict): an already loaded bookmarks dict
+
+        Yields:
+            iterable: chain(map(cls.walk_bookmarks, ['bookmarks_bar', 'other']))
+        """
         if bookmarks_json is None:
             bookmarks_json = cls.read_bookmarks(bookmarks_path)
         return itertools.chain(
@@ -143,31 +158,55 @@ class ChromiumBookmarks(object):
             cls.walk_bookmarks(bookmarks_json['roots']['other']))
 
     def __iter__(self):
+        """
+        Returns:
+            iterable: ChromiumBookmarks.iter_bookmarks(**self)
+        """
         return ChromiumBookmarks.iter_bookmarks(
             self.bookmarks_path,
             bookmarks_json=self.bookmarks_json)
 
+
     @staticmethod
-    def reorganize_by_date(bookmarks):
+    def chrome_filterfunc(b):
+        """
+        Args:
+            b (dict): bookmark dict
+        Returns:
+            bool: **False** if b.url.startswith('chrome://')
+        """
+        return not getattr(b, 'url','').startswith('chrome://')
+
+
+    @staticmethod
+    def reorganize_by_date(bookmarks, filterfunc=None):
         """
         Reorganize bookmarks into date-based folders
 
-        2014
-        2014-08
-            2014-08-22
+        ::
+            2014
+                2014-08
+                    2014-08-22
 
         Args:
             bookmarks (iterable{}): iterable of Chromium Bookmarks JSON
 
-        Returns:
-            iterable{}: iterable of Chromium Bookmarks JSON
+        Keyword Arguments:
+            filterfunc (None, True, callable): default, all, True to include
 
+        Returns:
+            list[dict]: nested JSON-serializable bookmarks folder and url dicts
         """
         id_max = max(int(b.id) for b in bookmarks)
         ids = itertools.count(id_max + 1)
 
-        bookmarks_iter = (b for b in bookmarks
-                          if not getattr(b, 'url','').startswith('chrome://'))
+        # by default: include all items
+        if filterfunc is True:
+            filterfunc = lambda x: True
+        elif filterfunc is None:
+            filterfunc = ChromiumBookmarks.chrome_filterfunc
+
+        bookmarks_iter = (b for b in bookmarks if filterfunc(b))
 
         bookmarks_by_day = itertools.groupby(
             sorted(bookmarks_iter, key=lambda x: x.date_added_),
@@ -233,6 +272,22 @@ class ChromiumBookmarks(object):
     @staticmethod
     def rewrite_bookmarks_json(bookmarks_path, dest=None, prompt=True,
                                func=reorganized_by_date):
+        """
+        Apply a transformation function to Chromium Bookmarks JSON data,
+        then write out the changes to a new file or the same file,
+        prompting before overwriting by default.
+
+        Args:
+            bookmarks_path (str): path to bookmarks JSON file
+
+        Keyword Arguments:
+            dest (str): path to write bookmarks JSON file to
+            prompt (bool): prompt before overwriting bookmarks JSON file
+            func (callable): bookmarks transform func (default: None)
+
+        Returns:
+            str: block of indented JSON
+        """
         bookmarks = list(ChromiumBookmarks.iter_bookmarks(bookmarks_path))
 
         ids = itertools.count(len(bookmarks))
@@ -243,22 +298,138 @@ class ChromiumBookmarks(object):
         if 'checksum' in bookmarks_json:
             bookmarks_json.pop('checksum')
         bookmarks_json['roots']['bookmark_bar']['children'] = output
+
+        # add chrome:// folder
         bookmarks_json['roots']['bookmark_bar']['children'].extend([
             {
-                "url": "chrome://bookmarks/",
-                "type":'url',
+                "type":'folder',
                 "id": ids.next(),
-                "name": "Bookmarks",
+                "name": "bookmarklets",
                 "date_added": 0,
                 "date_modified": 0,
+                "children": [
+                    {
+                        "url": 'data:text/html, <html style="font-family:Helvetica; background: #333; width: 400px; margin: 0 auto; color: white;" contenteditable><title>todo</title>==================<br>todo<br>==================<br>.',
+                        "type": 'url',
+                        "id": ids.next(),
+                        "name": "notetab",
+                        "date_added": 0,
+                        "date_modified": 0,
+                    },
+                    {
+                        "url": 'javascript:function iprl5()%7Bvar d%3Ddocument,z%3Dd.createElement(%27scr%27%2B%27ipt%27),b%3Dd.body,l%3Dd.location%3Btry%7Bif(!b)throw(0)%3Bz.setAttribute(%27src%27,%27https://dabble.me/cast/bookmarklet.js%3F%27%2B(new Date().getTime()))%3Bb.appendChild(z)%3B%7Dcatch(e)%7Balert(%27Please wait until the page has loaded.%27)%3B%7D%7Diprl5()%3Bvoid(0)',
+                        "type": 'url',
+                        "id": ids.next(),
+                        "name": "vidcast",
+                        "date_added": 0,
+                        "date_modified": 0
+                    },
+                    {
+                        "url": 'javascript:var i = document.createElement("iframe");i.src = window.location;i.setAttribute("width",window.innerWidth-20);i.setAttribute("height",window.innerHeight-20); i.style.position="fixed"; i.style.top=10; i.style.left=10; document.body.appendChild(i);',
+                        "type": 'url',
+                        "id": ids.next(),
+                        "name": "iframeify",
+                        "date_added": 0,
+                        "date_modified": 0
+                    }
+                ]
             },
             {
-                "url": "chrome://history/",
-                "type":'url',
+                "type":'folder',
                 "id": ids.next(),
-                "name": "History",
+                "name": "chrome",
                 "date_added": 0,
                 "date_modified": 0,
+                "children": [
+                    {
+                        "url": "chrome://bookmarks",
+                        "type":'url',
+                        "id": ids.next(),
+                        "name": "chrome://bookmarks",
+                        "date_added": 0,
+                        "date_modified": 0,
+                    },
+                    {
+                        "url": "chrome://history",
+                        "type":'url',
+                        "id": ids.next(),
+                        "name": "chrome://history",
+                        "date_added": 0,
+                        "date_modified": 0,
+                    },
+                    {
+                        "url": "chrome://extensions",
+                        "type":'url',
+                        "id": ids.next(),
+                        "name": "chrome://extensions",
+                        "date_added": 0,
+                        "date_modified": 0,
+                    },
+                    {
+                        "url": "chrome://plugins",
+                        "type":'url',
+                        "id": ids.next(),
+                        "name": "chrome://plugins",
+                        "date_added": 0,
+                        "date_modified": 0,
+                    },
+                    {
+                        "url": "chrome://flags",
+                        "type":'url',
+                        "id": ids.next(),
+                        "name": "chrome://flags",
+                        "date_added": 0,
+                        "date_modified": 0,
+                    },
+                    {
+                        "url": "chrome://settings",
+                        "type":'url',
+                        "id": ids.next(),
+                        "name": "chrome://settings",
+                        "date_added": 0,
+                        "date_modified": 0,
+                    },
+                    {
+                        "url": "chrome://flags",
+                        "type":'url',
+                        "id": ids.next(),
+                        "name": "chrome://flags",
+                        "date_added": 0,
+                        "date_modified": 0,
+                    },
+                    {
+                        "url": "chrome://apps",
+                        "type":'url',
+                        "id": ids.next(),
+                        "name": "chrome://apps",
+                        "date_added": 0,
+                        "date_modified": 0,
+                    },
+                    {
+                        "url": "chrome://downloads",
+                        "type":'url',
+                        "id": ids.next(),
+                        "name": "chrome://downloads",
+                        "date_added": 0,
+                        "date_modified": 0,
+                    },
+                    {
+                        "url": "chrome://chrome",
+                        "type":'url',
+                        "id": ids.next(),
+                        "name": "chrome://chrome",
+                        "date_added": 0,
+                        "date_modified": 0,
+                    },
+                    {
+                        "url": "chrome://chrome-urls",
+                        "type":'url',
+                        "id": ids.next(),
+                        "name": "chrome://chrome-urls",
+                        "date_added": 0,
+                        "date_modified": 0,
+                    },
+                ],
             },
         ])
         bookmarks_json['roots']['other']['children'] = []
@@ -268,8 +439,19 @@ class ChromiumBookmarks(object):
 
     @staticmethod
     def overwrite_bookmarks_json(data, bookmarks_path, prompt=True):
-        # TODO: if os.path.exists, prompt
+        """
+        Overwrite Bookmarks JSON file
 
+        Args:
+            data (dict): JSON-serializable object(s)
+            bookmarks_path (str): path to Bookmarks JSON file to write to
+
+        Keyword Arguments:
+            prompt (bool): prompt before overwriting
+
+        Returns:
+            bool: True
+        """
         if os.path.exists(bookmarks_path):
             log.info("bookmarks_path exists: %r" % bookmarks_path)
             if prompt:
@@ -286,6 +468,20 @@ class ChromiumBookmarks(object):
         return True
 
     def overwrite(self, dest=None, prompt=True):
+        """
+        Overwrite Bookmarks JSON file
+
+        Args:
+            data (dict): JSON-serializable object(s)
+
+        Keyword Arguments:
+            dest (str): path to Bookmarks JSON file to write to
+                        (default: self.bookmarks_path)
+            prompt (bool): prompt before overwriting
+
+        Returns:
+            bool: True
+        """
         if dest is None:
             dest = self.bookmarks_path
         output = ChromiumBookmarks.rewrite_bookmarks_json(self.bookmarks_path)
