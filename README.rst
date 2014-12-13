@@ -12,9 +12,10 @@ promiumbookmarks
         :target: https://pypi.python.org/pypi/promiumbookmarks
 
 
-promiumbookmarks works with Chromium bookmarks JSON
+promiumbookmarks works with Chromium bookmarks JSON.
 
 * Free software: BSD license
+* Source: https://github.com/westurner/promiumbookmarks
 
 .. * Documentation: https://promiumbookmarks.readthedocs.org.
 
@@ -23,11 +24,8 @@ Features
 
 * List Chrome and Chromium Bookmarks JSON files (``-l`` / ``-L``)
 * Print all bookmarks (``--print-all``)
-* Reorganize all bookmarks into the Bookmarks Bar:
+* Reorganize all bookmarks into the Bookmarks Bar
   
-.. code:: bash
-
-   promiumbookmarks -d --overwrite ./path/to/Bookmarks  # e.g. a path from -l
 
 * Default folders:
 
@@ -37,3 +35,33 @@ Features
   * ``chrome`` -- select ``chrome://`` URLs
   * ``quicklinks`` -- custom quicklinks (optional; will not be modified)
   * ``queue`` -- default folder for new bookmarks
+
+Installation
+--------------
+Install from PyPI with pip:
+
+.. code:: bash
+
+   pip install promiumbookmarks
+
+Development:
+
+.. code:: bash
+
+   pip install -e https://github.com/westurner/promiumbookmarks#egg=promiumbookmarks
+
+
+Usage
+-------
+List available ``Bookmarks`` files in Chrome and Chromium User Data
+directories:
+
+.. code:: bash
+
+   promiumbookmarks -l  # or -L to also list Bookmarks.%FT%T%z.bkp backups
+
+Reorganize all bookmarks into Bookmarks Bar folders:
+
+.. code:: bash
+
+   promiumbookmarks --overwrite ./path/to/Bookmarks  # e.g. a path from -l
