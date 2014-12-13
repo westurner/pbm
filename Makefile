@@ -1,4 +1,10 @@
-.PHONY: clean-pyc clean-build docs clean
+
+.PHONY: clean-pyc clean-build docs clean \
+	default test nosetest \
+	debug rebuild ls-profiles \
+	rebuild print-all print-by-date
+
+default: test
 
 help:
 	@echo "clean - remove all build, test, coverage and Python artifacts"
@@ -35,7 +41,11 @@ lint:
 	flake8 promiumbookmarks tests
 
 test:
-	python setup.py test
+	# python setup.py test
+	$(PROMIUMBOOKMARKS) -t
+
+nosetest:
+	nosetests --with-coverage ./promiumbookmarks.py
 
 test-all:
 	tox
@@ -64,19 +74,6 @@ dist: clean
 	ls -l dist
 
 # promiumbookmarks Makefile
-
-.PHONY: default test nosetest \
-	debug rebuild ls-profiles \
-	rebuild print-all print-by-date
-
-default: test
-
-test:
-	python ./promiumbookmarks.py -t
-
-nosetest:
-	nosetests --with-coverage ./promiumbookmarks.py
-
 ##############################################################################
 
 #PROFILE_NAME:="Default"
@@ -84,6 +81,8 @@ PROFILE_NAME:=Profile\ 1
 CHROMIUM_DIR=$${HOME}/Library/Application\ Support/Google/Chrome
 CHROMIUM_PROFILE=$(CHROMIUM_DIR)/$(PROFILE_NAME)
 CHROMIUM_BOOKMARKS=$(CHROMIUM_PROFILE)/Bookmarks
+
+PROMIUMBOOKMARKS=./promiumbookmarks/promiumbookmarks.py
 
 debug:
 	@echo "---"
@@ -94,13 +93,13 @@ debug:
 	ls $(CHROMIUM_PROFILE)
 
 ls-profiles:
-	ls -l $(CHROMIUM_DIR)/*/Bookmarks
+	$(PROMIUMBOOKMARKS) -l
 
 rebuild:
-	python ./promiumbookmarks.py --overwrite $(CHROMIUM_BOOKMARKS)
+	$(PROMIUMBOOKMARKS) --overwrite $(CHROMIUM_BOOKMARKS)
 
 print-all:
-	python ./promiumbookmarks.py --print-all $(CHROMIUM_BOOKMARKS)
+	$(PROMIUMBOOKMARKS) --print-all $(CHROMIUM_BOOKMARKS)
 
 print-by-date:
-	python ./promiumbookmarks.py --by-date $(CHROMIUM_BOOKMARKS)
+	$(PROMIUMBOOKMARKS) --by-date $(CHROMIUM_BOOKMARKS)
