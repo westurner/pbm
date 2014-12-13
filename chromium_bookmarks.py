@@ -297,10 +297,26 @@ class ChromiumBookmarks(object):
         bookmarks_json = ChromiumBookmarks.read_bookmarks(bookmarks_path)
         if 'checksum' in bookmarks_json:
             bookmarks_json.pop('checksum')
+
+        _quicklinks = [
+            x for x in bookmarks_json['roots']['bookmark_bar']['children']
+                if x.get('name') == 'quicklinks']
+
         bookmarks_json['roots']['bookmark_bar']['children'] = output
 
         # add chrome:// folder
-        bookmarks_json['roots']['bookmark_bar']['children'].extend([
+        bookmarks_json['roots']['bookmark_bar']['children'].extend(
+            ChromiumBookmarks.build_default_folders(ids))
+        bookmarks_json['roots']['bookmark_bar']['children'].extend(
+            _quicklinks)
+        bookmarks_json['roots']['other']['children'] = []
+        output_json = json.dumps(bookmarks_json, indent=2)
+        assert json.loads(output_json) == bookmarks_json
+        return output_json
+
+    @staticmethod
+    def build_default_folders(ids):
+        return [
             {
                 "type":'folder',
                 "id": ids.next(),
@@ -431,11 +447,7 @@ class ChromiumBookmarks(object):
                     },
                 ],
             },
-        ])
-        bookmarks_json['roots']['other']['children'] = []
-        output_json = json.dumps(bookmarks_json, indent=2)
-        assert json.loads(output_json) == bookmarks_json
-        return output_json
+        ]
 
     @staticmethod
     def overwrite_bookmarks_json(data, bookmarks_path, prompt=True):
