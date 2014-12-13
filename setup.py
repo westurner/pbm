@@ -12,17 +12,16 @@ readme = open('README.rst').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 requirements = [
-    # TODO: put package requirements here
 ]
 
 test_requirements = [
-    # TODO: put package test requirements here
 ]
 
 setup(
     name='promiumbookmarks',
-    version='0.2.0',
-    description='promiumbookmarks works with Chromium bookmarks JSON',
+    version='0.2.1',
+    description=(
+        'promiumbookmarks works with Chrome and Chromium bookmarks JSON.'),
     long_description=readme + '\n\n' + history,
     author='Wes Turner',
     author_email='wes@wrd.nu',
@@ -38,16 +37,24 @@ setup(
     zip_safe=False,
     keywords='promiumbookmarks',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        "Programming Language :: Python :: 2",
+        'Development Status :: 4 - Beta',
+        'Environment :: Console',
         'Intended Audience :: Developers',
+        'Intended Audience :: End Users/Desktop',
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
-        "Programming Language :: Python :: 2",
+        'Operating System :: MacOS :: MacOS X',
+        'Operating System :: Microsoft :: Windows',
+        'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
+        'Topic :: Internet :: WWW/HTTP :: Browsers',
+        'Topic :: Utilities',
+
     ],
     entry_points="""
     [console_scripts]
