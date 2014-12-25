@@ -606,24 +606,27 @@ def get_chromedir(platform, release):
 
     http://www.chromium.org/user-experience/user-data-directory
     """
+    chromedirs = None
     if platform == 'darwin':
         chromedir = os.path.expanduser(
             '~/Library/Application Support/Google/Chrome')
-        return chromedir
-    elif platform == 'linux':
+    elif platform.startswith('linux2'):
         chromedir = os.path.expanduser(
-             '~/.config/google-chrome/Default')
-        return chromedir
+             '~/.config/google-chrome')
+        chromedirs = [chromedir,
+                      os.path.expanduser('~/.config/google-chrome-unstable')]
     elif platform == 'win32':
         if release == 'XP':
             chromedir = os.path.expanduser(
-                '~\Local Settings\Application Data\Google\Chrome\User Data\Default')
+                '~\Local Settings\Application Data\Google\Chrome\User Data')
         else:
             chromedir = os.path.expanduser(
-                '~\AppData\Local\Google\Chrome\User Data\Default')
-        return chromedir
+                '~\AppData\Local\Google\Chrome\User Data')
     else:
         raise NotImplementedError("Unknown platform: %r" % platform)
+    if chromedirs:
+        return chromedirs
+    return [chromedir]
 
 
 def get_chromiumdir(platform, release):
@@ -639,20 +642,19 @@ def get_chromiumdir(platform, release):
     if platform == 'darwin':
         chromedir = os.path.expanduser(
             '~/Library/Application Support/Chromium')
-        return chromedir
-    elif platform == 'linux':
+    elif platform.startswith('linux'):
         chromedir = os.path.expanduser(
-             '~/.config/chromium/Default')
+             '~/.config/chromium')
     elif platform == 'win32':
         if release == 'XP':
             chromedir = os.path.expanduser(
-                '~\Local Settings\Application Data\Chromium\User Data\Default')
+                '~\Local Settings\Application Data\Chromium\User Data')
         else:
             chromedir = os.path.expanduser(
-                '~\AppData\Local\Chromium\User Data\Default')
-        return chromedir
+                '~\AppData\Local\Chromium\User Data')
     else:
         raise NotImplementedError("Unknown platform: %r" % platform)
+    return [chromedir]
 
 
 def list_profile_bookmarks(prefix=None,
@@ -681,9 +683,9 @@ def list_profile_bookmarks(prefix=None,
         glob_suffix = '*' + os.path.sep + 'Bookmarks'
 
     if prefix in (None, True):
-        chromedir = get_chromedir(platform, release)
-        chromiumdir = get_chromiumdir(platform, release)
-        dirs = [chromedir, chromiumdir]
+        chromedirs = get_chromedir(platform, release)
+        chromiumdirs = get_chromiumdir(platform, release)
+        dirs = chromedirs + chromiumdirs
     else:
         dirs = [prefix]
     log.debug("Listing profile Bookmarks in: %r" % dirs)
