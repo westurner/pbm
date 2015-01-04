@@ -92,11 +92,37 @@ class Folder(
                 node.get('date_modified')))
 
 
+class PluginManager:
+    @staticmethod
+    def get_plugins():
+        """
+        mainfunc
+        """
+        import pkg_resources
+        entry_points = pkg_resources.iter_entry_points(
+            group='promiumbookmarks_plugins')
+        for ep in entry_points:
+            yield ep.name, ep.load()
+
+    @staticmethod
+    def list_plugins():
+        print('installed promiumbookmarks.plugins entry_points\n'
+                '-------------------------------------------------')
+        plugins = PluginManager.get_plugins()
+        for name, cls in plugins:
+            print(name, cls)
+
+
+
 class ChromiumBookmarks(object):
 
-    def __init__(self, bookmarks_path):
+    skiplist = ['chrome', 'bookmarklets', 'quicklinks']
+
+    def __init__(self, bookmarks_path, skiplist=None):
         self.bookmarks_path = bookmarks_path
-        self.bookmarks_json = self.read_bookmarks(self.bookmarks_path)
+        self.bookmarks_dict = self.read_bookmarks(self.bookmarks_path)
+        if skiplist is not None:
+            self.skiplist = skiplist
 
     @staticmethod
     def read_bookmarks(path):
@@ -152,25 +178,25 @@ class ChromiumBookmarks(object):
             yield URL.from_url_node(node)
 
     @classmethod
-    def iter_bookmarks(cls, bookmarks_path, bookmarks_json=None,
+    def iter_bookmarks(cls, bookmarks_path, bookmarks_dict=None,
                        filterfunc=None):
         """
         Args:
             bookmarks_path (path): path to Chromium Bookmarks JSON to read first
 
         Keyword Arguments:
-            bookmarks_json (dict): an already loaded bookmarks dict
+            bookmarks_dict (dict): an already loaded bookmarks dict
             filterfunc (None, True, callable): default, all, True to include
 
         Yields:
             iterable: chain(map(cls.walk_bookmarks, ['bookmarks_bar', 'other']))
         """
-        if bookmarks_json is None:
-            bookmarks_json = cls.read_bookmarks(bookmarks_path)
+        if bookmarks_dict is None:
+            bookmarks_dict = cls.read_bookmarks(bookmarks_path)
         return itertools.chain(
-            cls.walk_bookmarks(bookmarks_json['roots']['bookmark_bar'],
+            cls.walk_bookmarks(bookmarks_dict['roots']['bookmark_bar'],
                                filterfunc=filterfunc),
-            cls.walk_bookmarks(bookmarks_json['roots']['other'],
+            cls.walk_bookmarks(bookmarks_dict['roots']['other'],
                                filterfunc=filterfunc))
 
     def __iter__(self):
@@ -180,34 +206,56 @@ class ChromiumBookmarks(object):
         """
         return ChromiumBookmarks.iter_bookmarks(
             self.bookmarks_path,
-            bookmarks_json=self.bookmarks_json)
+            bookmarks_dict=self.bookmarks_dict)
+
+    @staticmethod
+    def urlskip(url):
+        # strip apps, bookmarklets, and data URIs
+        if url.startswith('chrome:'):
+            return False
+        if url.startswith('javascript:'):
+            return False
+        if url.startswith('data:'):
+            return False
+        return True
+
+    @staticmethod
+    def folderskip(name, skiplist=None, addl_skiplist=None):
+        if skiplist is None:
+            skiplist = ChromiumBookmarks.skiplist
+        if addl_skiplist:
+            skiplist.extend(addl_skiplist)
+        if name in skiplist:
+            return False
+        return True
 
 
     @staticmethod
-    def chrome_filterfunc(b):
+    def chrome_filterfunc(b, skiplist=None, addl_skiplist=None):
         """
         Args:
             b (object): a Folder, Url, or bookmark folder or url dict
+        Keyword Arguments:
+            skiplist (list): list of folder names to skip
+                             (default: None: chrome, bookmarklets, quicklinks)
+            addl_skiplist (list): additional list of folder names to skip
+                             (skiplist.append(addl_skiplist))
         Returns:
             bool: **False** to exclude this bookmark folder or url
         """
-        type_ = getattr(b, 'type', hasattr(b, 'get') and b.get('type','') or '')
+        def lookup(obj, attr, default=None):
+            return getattr(obj, attr,
+                           hasattr(obj, 'get') and obj.get(attr, default)
+                           or default)
+        type_ = lookup(b, 'type', '')
         if type_ == 'url':
-            url = getattr(b, 'url', hasattr(b, 'get') and b.get('url','') or '')
-            if url.startswith('chrome://'):
-                return False
-            if url.startswith('javascript:'):
-                return False
-            if url.startswith('data:'):
-                return False
+            url = lookup(b, 'url', '')
+            return ChromiumBookmarks.urlskip(url)
         elif type_ == 'folder':
-            name = (getattr(b, 'name', hasattr(b, 'get')
-                            and b.get('name', '') or ''))
-            if name in ['chrome', 'bookmarklets', 'quicklinks']:
-                return False
+            name = lookup(b, 'name', '')
+            return ChromiumBookmarks.folderskip(name)
         else:
-            log.debug("Unknown type: %r" % type_)
-            return True
+            log.debug("Unknown type: %r" % (type_, b))
         return True
 
     @staticmethod
@@ -302,19 +350,15 @@ class ChromiumBookmarks(object):
         return ChromiumBookmarks.reorganize_by_date(self)
 
     @staticmethod
-    def rewrite_bookmarks_json(bookmarks_path, dest=None, prompt=True,
+    def transform_bookmarks_dict(bookmarks_path,
                                func=reorganized_by_date):
         """
-        Apply a transformation function to Chromium Bookmarks JSON data,
-        then write out the changes to a new file or the same file,
-        prompting before overwriting by default.
+        Apply a transformation function to Chromium Bookmarks JSON data.
 
         Args:
             bookmarks_path (str): path to bookmarks JSON file
 
         Keyword Arguments:
-            dest (str): path to write bookmarks JSON file to
-            prompt (bool): prompt before overwriting bookmarks JSON file
             func (callable): bookmarks transform func (default: None)
 
         Returns:
@@ -330,16 +374,16 @@ class ChromiumBookmarks(object):
 
         output = func(bookmarks)
 
-        bookmarks_json = ChromiumBookmarks.read_bookmarks(bookmarks_path)
-        if 'checksum' in bookmarks_json:
-            bookmarks_json.pop('checksum')
+        bookmarks_dict = ChromiumBookmarks.read_bookmarks(bookmarks_path)
+        if 'checksum' in bookmarks_dict:
+            bookmarks_dict.pop('checksum')
 
         _quicklinks = [
-            x for x in bookmarks_json['roots']['bookmark_bar']['children']
+            x for x in bookmarks_dict['roots']['bookmark_bar']['children']
                 if x and hasattr(x, 'get') and x.get('name') == 'quicklinks']
 
         _bookmarklets_folders = [
-            x for x in bookmarks_json['roots']['bookmark_bar']['children']
+            x for x in bookmarks_dict['roots']['bookmark_bar']['children']
                 if x and hasattr(x, 'name') and x.get('name') == 'bookmarklets']
         if len(_bookmarklets_folders) > 1:
             log.error("Found %d bookmarklets folders found. "
@@ -352,25 +396,25 @@ class ChromiumBookmarks(object):
             _bookmarklets_folder = None
 
         # add the year, year-month, year-month-day date-based folders
-        bookmarks_json['roots']['bookmark_bar']['children'] = output
+        bookmarks_dict['roots']['bookmark_bar']['children'] = output
 
         # merge the 'bookmarklets' folder with the default set
-        bookmarks_json['roots']['bookmark_bar']['children'].append(
+        bookmarks_dict['roots']['bookmark_bar']['children'].append(
             ChromiumBookmarks.build_bookmarklets_folder(
                 ids,
                 folder=_bookmarklets_folder))
 
         # always overwrite the 'chrome' folder
-        bookmarks_json['roots']['bookmark_bar']['children'].append(
+        bookmarks_dict['roots']['bookmark_bar']['children'].append(
             ChromiumBookmarks.build_chrome_folder(ids))
 
         # if quicklinks folder[s] exist, copy them over
         if _quicklinks:
-            bookmarks_json['roots']['bookmark_bar']['children'].extend(
+            bookmarks_dict['roots']['bookmark_bar']['children'].extend(
                 _quicklinks)
 
         # new bookmarks should default to the 'queue' folder
-        bookmarks_json['roots']['bookmark_bar']['children'].append(
+        bookmarks_dict['roots']['bookmark_bar']['children'].append(
             {
                 "type": 'folder',
                 "id": ids.next(),
@@ -380,10 +424,28 @@ class ChromiumBookmarks(object):
                 "children": []})
 
         # the 'Other Bookmarks' folder is now empty
-        bookmarks_json['roots']['other']['children'] = []
+        bookmarks_dict['roots']['other']['children'] = []
+        return bookmarks_dict
 
-        output_json = json.dumps(bookmarks_json, indent=2)
-        assert json.loads(output_json) == bookmarks_json
+    def do_plugins(bookmarks_list, bookmarks_dict, load_plugins=True):
+        if load_plugins:
+            plugin_classes = [x[1] for x in PluginManager.get_plugins()]
+            available_plugins = plugin_classes
+            log.debug("available_plugins=%s" % available_plugins)
+            plugins_to_load = [x for x in available_plugins
+                               if load_plugins==True
+                               or x in available_plugins
+                               or x.__name__ in load_plugins]
+            for Plugin in plugins_to_load:
+                plugin = Plugin(bookmarks_list=bookmarks,
+                    ids=ids,
+                    bookmarks_dict=bookmarks_dict)
+                log.debug("plugin: %s" % plugin)
+
+    @staticmethod
+    def to_json(bookmarks_dict):
+        output_json = json.dumps(bookmarks_dict, indent=2)
+        assert json.loads(output_json) == bookmarks_dict
         return output_json
 
     @staticmethod
@@ -589,9 +651,11 @@ class ChromiumBookmarks(object):
         """
         if dest is None:
             dest = self.bookmarks_path
-        output = ChromiumBookmarks.rewrite_bookmarks_json(self.bookmarks_path)
+        bookmarks_dict = ChromiumBookmarks.transform_bookmarks_dict(
+            self.bookmarks_path)
+        bookmarks_json = ChromiumBookmarks.to_json(bookmarks_dict)
         return ChromiumBookmarks.overwrite_bookmarks_json(
-            output,
+            bookmarks_json,
             self.bookmarks_path,
             prompt=prompt)
 
@@ -751,13 +815,14 @@ class Test_promiumbookmarks(unittest.TestCase):
         self.assertTrue(json_output)
 
     def test_51_rewrite_bookmarks(self):
-        bookmarks_json = ChromiumBookmarks.rewrite_bookmarks_json(
+        bookmarks_dict = ChromiumBookmarks.transform_bookmarks_dict(
             self.bookmarks_path)
+        bookmarks_json = ChromiumBookmarks.to_json(bookmarks_dict)
         ChromiumBookmarks.overwrite_bookmarks_json(
             bookmarks_json, self.bookmarks_path,
             prompt=False)
-        output_json = json.dumps(bookmarks_json, indent=2)
-        self.assertTrue(json.loads(output_json), bookmarks_json)
+        output_json = json.dumps(bookmarks_dict, indent=2)
+        self.assertTrue(json.loads(output_json), bookmarks_dict)
 
     def test_60_get_option_parser(self):
         prs = get_option_parser()
@@ -767,6 +832,7 @@ class Test_promiumbookmarks(unittest.TestCase):
         import sys
         __sys_argv = sys.argv
         sys.argv = [__file__]
+
         try:
             with self.assertRaises(IOError):
                 output = main()

@@ -29,6 +29,10 @@ setup(
     packages=[
         'promiumbookmarks',
     ],
+    namespace_package=[
+        'promiumbookmarks',
+        'promiumbookmarks.plugins',
+    ],
     package_dir={'promiumbookmarks':
                  'promiumbookmarks'},
     include_package_data=True,
