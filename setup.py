@@ -29,10 +29,6 @@ setup(
     packages=[
         'promiumbookmarks',
     ],
-    namespace_package=[
-        'promiumbookmarks',
-        'promiumbookmarks.plugins',
-    ],
     package_dir={'promiumbookmarks':
                  'promiumbookmarks'},
     include_package_data=True,
@@ -63,6 +59,8 @@ setup(
     entry_points="""
     [console_scripts]
     promiumbookmarks = promiumbookmarks.promiumbookmarks:main
+    [promium_plugins]
+    null = promiumbookmarks.plugins.null:NullPlugin
     """,
     test_suite='tests',
     tests_require=test_requirements
