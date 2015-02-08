@@ -9,14 +9,22 @@ import promiumbookmarks.promiumbookmarks as pb
 import promiumbookmarks.plugins as plugins
 
 class DateBasedFoldersPlugin(plugins.PromiumPlugin):
+    """
+    Organize bookmarks into year, year-month, year-month-day date-based folders
+
+    ::
+        2014
+            2014-08
+                2014-08-22
+
+    .. note:: This plugin should be called first, as it overwrites
+        bookmark_bar
+    """
 
     def process_bookmarks(self, bookmarks_obj):
-        bookmarks = bookmarks_obj.bookmarks_list
+        dbf_list = self.reorganize_by_date(bookmarks_obj.bookmarks_list)
         bookmarks_dict = bookmarks_obj.bookmarks_dict
-        output = self.reorganize_by_date(bookmarks)
-
-        # add the year, year-month, year-month-day date-based folders
-        bookmarks_dict['roots']['bookmark_bar']['children'] = output
+        bookmarks_dict['roots']['bookmark_bar']['children'] = dbf_list
         return bookmarks_obj
 
     @staticmethod
