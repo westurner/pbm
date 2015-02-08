@@ -245,9 +245,9 @@ class ChromiumBookmarks(object):
 
     @property
     def bookmarks_list(self):
-        return self.iter_bookmarks(
+        return list(self.iter_bookmarks(
             bookmarks_dict=self.bookmarks_dict,
-            filterfunc=ChromiumBookmarks.chrome_filterfunc)
+            filterfunc=ChromiumBookmarks.chrome_filterfunc))
 
     @staticmethod
     def urlskip(url):
