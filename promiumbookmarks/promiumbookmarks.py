@@ -189,7 +189,7 @@ class ChromiumBookmarks(object):
             filterfunc (None, True, callable): default, all, True to include
 
         Yields:
-            dict: (type: folder || url) dicts
+            namedtuple: Folder or URL namedtuples
         """
         _type = node.get('type')
         if _type == 'folder':
