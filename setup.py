@@ -19,7 +19,7 @@ test_requirements = [
 
 setup(
     name='promiumbookmarks',
-    version='0.2.5',
+    version='0.3.0',
     description=(
         'promiumbookmarks works with Chrome and Chromium bookmarks JSON.'),
     long_description=readme + '\n\n' + history,
@@ -59,6 +59,8 @@ setup(
     entry_points="""
     [console_scripts]
     promiumbookmarks = promiumbookmarks.promiumbookmarks:main
+    [promium_plugins]
+    null = promiumbookmarks.plugins.null:NullPlugin
     """,
     test_suite='tests',
     tests_require=test_requirements

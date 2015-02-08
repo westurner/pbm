@@ -18,7 +18,6 @@ Usage:
 """
 
 import codecs
-import collections
 import datetime
 import glob
 import itertools
@@ -30,6 +29,26 @@ import shutil
 import sys
 
 from collections import namedtuple
+
+
+class BookmarksObject(object):
+    def __init__(self,
+                 bookmarks_dict=None,
+                 bookmarks_list=None,
+                 ids=None,
+                 conf=None):
+        """
+        Keyword Arguments:
+            bookmarks_dict (dict): chromium bookmarks JSON dict
+            bookmarks_list (list): list of all bookmarks
+            ids (itertools.count): itertools.count() object at current max id
+            conf (dict): configuration dict
+        """
+        self.bookmarks_dict = bookmarks_dict
+        self.bookmarks_list = bookmarks_list
+        self.ids = ids
+        self.conf = conf
+
 
 DATETIME_CONST = 2**8 * 3**3 * 5**2 * 79 * 853
 
@@ -92,11 +111,37 @@ class Folder(
                 node.get('date_modified')))
 
 
+class PluginManager(object):
+
+    @staticmethod
+    def get_plugins():
+        """
+        mainfunc
+        """
+        import pkg_resources
+        entry_points = pkg_resources.iter_entry_points(
+            group='promiumbookmarks_plugins')
+        for ep in entry_points:
+            yield ep.name, ep.load()
+
+    @staticmethod
+    def list_plugins():
+        print('installed promiumbookmarks.plugins entry_points\n'
+              '-------------------------------------------------')
+        plugins = PluginManager.get_plugins()
+        for name, cls in plugins:
+            print(name, cls)
+
+
 class ChromiumBookmarks(object):
 
-    def __init__(self, bookmarks_path):
+    skiplist = ['chrome', 'bookmarklets', 'quicklinks']
+
+    def __init__(self, bookmarks_path, skiplist=None):
         self.bookmarks_path = bookmarks_path
-        self.bookmarks_json = self.read_bookmarks(self.bookmarks_path)
+        self.bookmarks_dict = self.read_bookmarks(self.bookmarks_path)
+        if skiplist is not None:
+            self.skiplist = skiplist
 
     @staticmethod
     def read_bookmarks(path):
@@ -152,25 +197,25 @@ class ChromiumBookmarks(object):
             yield URL.from_url_node(node)
 
     @classmethod
-    def iter_bookmarks(cls, bookmarks_path, bookmarks_json=None,
+    def iter_bookmarks(cls, bookmarks_path, bookmarks_dict=None,
                        filterfunc=None):
         """
         Args:
             bookmarks_path (path): path to Chromium Bookmarks JSON to read first
 
         Keyword Arguments:
-            bookmarks_json (dict): an already loaded bookmarks dict
+            bookmarks_dict (dict): an already loaded bookmarks dict
             filterfunc (None, True, callable): default, all, True to include
 
         Yields:
             iterable: chain(map(cls.walk_bookmarks, ['bookmarks_bar', 'other']))
         """
-        if bookmarks_json is None:
-            bookmarks_json = cls.read_bookmarks(bookmarks_path)
+        if bookmarks_dict is None:
+            bookmarks_dict = cls.read_bookmarks(bookmarks_path)
         return itertools.chain(
-            cls.walk_bookmarks(bookmarks_json['roots']['bookmark_bar'],
+            cls.walk_bookmarks(bookmarks_dict['roots']['bookmark_bar'],
                                filterfunc=filterfunc),
-            cls.walk_bookmarks(bookmarks_json['roots']['other'],
+            cls.walk_bookmarks(bookmarks_dict['roots']['other'],
                                filterfunc=filterfunc))
 
     def __iter__(self):
@@ -180,141 +225,66 @@ class ChromiumBookmarks(object):
         """
         return ChromiumBookmarks.iter_bookmarks(
             self.bookmarks_path,
-            bookmarks_json=self.bookmarks_json)
-
+            bookmarks_dict=self.bookmarks_dict)
 
     @staticmethod
-    def chrome_filterfunc(b):
-        """
-        Args:
-            b (object): a Folder, Url, or bookmark folder or url dict
-        Returns:
-            bool: **False** to exclude this bookmark folder or url
-        """
-        type_ = getattr(b, 'type', hasattr(b, 'get') and b.get('type','') or '')
-        if type_ == 'url':
-            url = getattr(b, 'url', hasattr(b, 'get') and b.get('url','') or '')
-            if url.startswith('chrome://'):
-                return False
-            if url.startswith('javascript:'):
-                return False
-            if url.startswith('data:'):
-                return False
-        elif type_ == 'folder':
-            name = (getattr(b, 'name', hasattr(b, 'get')
-                            and b.get('name', '') or ''))
-            if name in ['chrome', 'bookmarklets', 'quicklinks']:
-                return False
-        else:
-            log.debug("Unknown type: %r" % type_)
-            return True
+    def urlskip(url):
+        # strip apps, bookmarklets, and data URIs
+        if url.startswith('chrome:'):
+            return False
+        if url.startswith('javascript:'):
+            return False
+        if url.startswith('data:'):
+            return False
         return True
 
     @staticmethod
-    def reorganize_by_date(bookmarks, filterfunc=None):
-        """
-        Reorganize bookmarks into date-based folders
-
-        ::
-            2014
-                2014-08
-                    2014-08-22
-
-        Args:
-            bookmarks (iterable{}): iterable of Chromium Bookmarks JSON
-
-        Keyword Arguments:
-            filterfunc (None, True, callable): default, all, True to include
-
-        Returns:
-            list[dict]: nested JSON-serializable bookmarks folder and url dicts
-        """
-        id_max = max(int(b.id) for b in bookmarks)
-        ids = itertools.count(id_max + 1)
-
-        # by default: include all items
-        if filterfunc is True:
-            filterfunc = lambda x: True
-        elif filterfunc is None:
-            filterfunc = ChromiumBookmarks.chrome_filterfunc
-
-        bookmarks_iter = (b for b in bookmarks if filterfunc(b))
-
-        bookmarks_by_day = itertools.groupby(
-            sorted(bookmarks_iter, key=lambda x: x.date_added_),
-            lambda x: (x.date_added_.year,
-                       x.date_added_.month,
-                       x.date_added_.day))
-        bookmarks_by_day = [(x, list(iterable))
-                            for (x, iterable) in bookmarks_by_day]
-
-        bookmarks_by_day_month = itertools.groupby(bookmarks_by_day,
-                                                   lambda x: x[0][:2])
-        bookmarks_by_day_month = [(x, list(iterable))
-                                  for (x, iterable) in bookmarks_by_day_month]
-
-        bookmarks_by_day_month_year = itertools.groupby(bookmarks_by_day_month,
-                                                        lambda x: x[0][0])
-        bookmarks_by_day_month_year = [
-            (x,
-             list(iterable)) for (
-                x,
-                iterable) in bookmarks_by_day_month_year]
-
-        output = []
-        for year, by_year in bookmarks_by_day_month_year:
-            year_folder = {
-                "type": "folder",
-                "id": ids.next(),
-                "name": str(year),
-                "children": [],
-                "date_added": "13053368494256041",
-                "date_modified": "0",
-            }
-            for month, by_day in by_year:
-                month_folder = {
-                    "type": "folder",
-                    "id": ids.next(),
-                    "name": '-'.join(str(s) for s in month),
-                    "children": [],
-                    "date_added": "13053368494256041",
-                    "date_modified": "0",
-                }
-                for day, iterable in by_day:
-                    day_folder = {
-                        "type": "folder",
-                        "id": ids.next(),
-                        "name": '-'.join(str(s) for s in day),
-                        "children": [],
-                        "date_added": "13053368494256041",
-                        "date_modified": "0",
-                    }
-                    for b in iterable:
-                        if b.type == 'url':
-                            day_folder['children'].append(b.to_json())
-                    month_folder['children'].append(day_folder)
-                year_folder['children'].append(month_folder)
-            output.append(year_folder)
-
-        return output
-
-    def reorganized_by_date(self):
-        return ChromiumBookmarks.reorganize_by_date(self)
+    def folderskip(name, skiplist=None, addl_skiplist=None):
+        if skiplist is None:
+            skiplist = ChromiumBookmarks.skiplist
+        if addl_skiplist:
+            skiplist.extend(addl_skiplist)
+        if name in skiplist:
+            return False
+        return True
 
     @staticmethod
-    def rewrite_bookmarks_json(bookmarks_path, dest=None, prompt=True,
-                               func=reorganized_by_date):
+    def chrome_filterfunc(b, skiplist=None, addl_skiplist=None):
         """
-        Apply a transformation function to Chromium Bookmarks JSON data,
-        then write out the changes to a new file or the same file,
-        prompting before overwriting by default.
+        Args:
+            b (object): a Folder, Url, or bookmark folder or url dict
+        Keyword Arguments:
+            skiplist (list): list of folder names to skip
+                             (default: None: chrome, bookmarklets, quicklinks)
+            addl_skiplist (list): additional list of folder names to skip
+                             (skiplist.append(addl_skiplist))
+        Returns:
+            bool: **False** to exclude this bookmark folder or url
+        """
+        def lookup(obj, attr, default=None):
+            return getattr(obj, attr,
+                           hasattr(obj, 'get') and obj.get(attr, default)
+                           or default)
+        type_ = lookup(b, 'type', '')
+        if type_ == 'url':
+            url = lookup(b, 'url', '')
+            return ChromiumBookmarks.urlskip(url)
+        elif type_ == 'folder':
+            name = lookup(b, 'name', '')
+            return ChromiumBookmarks.folderskip(name)
+        else:
+            log.debug("Unknown type: %r" % (type_, b))
+        return True
+
+    @staticmethod
+    def transform_bookmarks_dict(bookmarks_path):
+        """
+        Apply a transformation function to Chromium Bookmarks JSON data.
 
         Args:
             bookmarks_path (str): path to bookmarks JSON file
 
         Keyword Arguments:
-            dest (str): path to write bookmarks JSON file to
-            prompt (bool): prompt before overwriting bookmarks JSON file
             func (callable): bookmarks transform func (default: None)
 
         Returns:
@@ -324,53 +294,43 @@ class ChromiumBookmarks(object):
             ChromiumBookmarks.iter_bookmarks(
                 bookmarks_path,
                 filterfunc=ChromiumBookmarks.chrome_filterfunc
-        ))
+                ))
 
         ids = itertools.count(len(bookmarks))
 
-        output = func(bookmarks)
+        bookmarks_dict = ChromiumBookmarks.read_bookmarks(bookmarks_path)
+        if 'checksum' in bookmarks_dict:
+            bookmarks_dict.pop('checksum')
 
-        bookmarks_json = ChromiumBookmarks.read_bookmarks(bookmarks_path)
-        if 'checksum' in bookmarks_json:
-            bookmarks_json.pop('checksum')
+        bookmarks_obj = BookmarksObject(
+            bookmarks_dict=bookmarks_dict,
+            bookmarks_list=bookmarks,
+            ids=ids,
+            conf={})
 
+        # get any folders named quicklinks
         _quicklinks = [
-            x for x in bookmarks_json['roots']['bookmark_bar']['children']
-                if x and hasattr(x, 'get') and x.get('name') == 'quicklinks']
+            x for x in bookmarks_dict['roots']['bookmark_bar']['children']
+            if x and hasattr(x, 'get') and x.get('name') == 'quicklinks']
 
-        _bookmarklets_folders = [
-            x for x in bookmarks_json['roots']['bookmark_bar']['children']
-                if x and hasattr(x, 'name') and x.get('name') == 'bookmarklets']
-        if len(_bookmarklets_folders) > 1:
-            log.error("Found %d bookmarklets folders found. "
-                      "Taking the first and dropping subsequent folders."
-                      % len(_bookmarklets_folders))
-            _bookmarklets_folder = _bookmarklets_folders[0]
-        elif len(_bookmarklets_folders) == 1:
-            _bookmarklets_folder = _bookmarklets_folders[0]
-        else:
-            _bookmarklets_folder = None
+        import plugins.bookmarkletsfolder as bf
+        import plugins.datebasedfolders as dbf
+        import plugins.chromefolder as cf
 
-        # add the year, year-month, year-month-day date-based folders
-        bookmarks_json['roots']['bookmark_bar']['children'] = output
-
-        # merge the 'bookmarklets' folder with the default set
-        bookmarks_json['roots']['bookmark_bar']['children'].append(
-            ChromiumBookmarks.build_bookmarklets_folder(
-                ids,
-                folder=_bookmarklets_folder))
-
-        # always overwrite the 'chrome' folder
-        bookmarks_json['roots']['bookmark_bar']['children'].append(
-            ChromiumBookmarks.build_chrome_folder(ids))
+        bookmarks_obj = (
+            dbf.DateBasedFoldersPlugin().process_bookmarks(bookmarks_obj))
+        bookmarks_obj = (
+            bf.BookmarkletsFolderPlugin().process_bookmarks(bookmarks_obj))
+        bookmarks_obj = (
+            cf.ChromeFolderPlugin().process_bookmarks(bookmarks_obj))
 
         # if quicklinks folder[s] exist, copy them over
         if _quicklinks:
-            bookmarks_json['roots']['bookmark_bar']['children'].extend(
+            bookmarks_dict['roots']['bookmark_bar']['children'].extend(
                 _quicklinks)
 
         # new bookmarks should default to the 'queue' folder
-        bookmarks_json['roots']['bookmark_bar']['children'].append(
+        bookmarks_dict['roots']['bookmark_bar']['children'].append(
             {
                 "type": 'folder',
                 "id": ids.next(),
@@ -380,162 +340,50 @@ class ChromiumBookmarks(object):
                 "children": []})
 
         # the 'Other Bookmarks' folder is now empty
-        bookmarks_json['roots']['other']['children'] = []
-
-        output_json = json.dumps(bookmarks_json, indent=2)
-        assert json.loads(output_json) == bookmarks_json
-        return output_json
+        bookmarks_dict['roots']['other']['children'] = []
+        return bookmarks_dict
 
     @staticmethod
-    def build_bookmarklets_folder(ids, folder=None):
-        if folder is None:
-            folder = {
-                "type":'folder',
-                "id": ids.next(),
-                "name": "bookmarklets",
-                "date_added": 0,
-                "date_modified": 0,
-                "children": []}
+    def do_plugins(bookmarks_obj, conf=None):
+        """
+        Process bookmarks plugins
 
-        default_bookmarklets = [
-            {
-                "url": 'data:text/html, <html style="font-family:Helvetica; background: #333; width: 400px; margin: 0 auto; color: white;" contenteditable><title>todo</title>==================<br>todo<br>==================<br>.',
-                "type": 'url',
-                "id": ids.next(),
-                "name": "notetab",
-                "date_added": 0,
-                "date_modified": 0,
-            },
-            {
-                "url": 'javascript:function iprl5()%7Bvar d%3Ddocument,z%3Dd.createElement(%27scr%27%2B%27ipt%27),b%3Dd.body,l%3Dd.location%3Btry%7Bif(!b)throw(0)%3Bz.setAttribute(%27src%27,%27https://dabble.me/cast/bookmarklet.js%3F%27%2B(new Date().getTime()))%3Bb.appendChild(z)%3B%7Dcatch(e)%7Balert(%27Please wait until the page has loaded.%27)%3B%7D%7Diprl5()%3Bvoid(0)',
-                "type": 'url',
-                "id": ids.next(),
-                "name": "vidcast",
-                "date_added": 0,
-                "date_modified": 0
-            },
-            {
-                "url": 'javascript:var i = document.createElement("iframe");i.src = window.location;i.setAttribute("width",window.innerWidth-20);i.setAttribute("height",window.innerHeight-20); i.style.position="fixed"; i.style.top=10; i.style.left=10; document.body.appendChild(i);',
-                "type": 'url',
-                "id": ids.next(),
-                "name": "iframeify",
-                "date_added": 0,
-                "date_modified": 0
-            }
-        ]
+        Arguments:
+            bookmarks_obj (BookmarksObject): bookmarks object to mutate
 
-        if folder.get('children'):
-            keys = dict.fromkeys(
-                (url.get('type'), url.get('name'), url.get('url'))
-                for url in folder['children'])
-            for url in default_bookmarklets:
-                key = (url.get('type'), url.get('name'), url.get('url'))
-                if key not in keys:
-                    folder['children'].append(url)
+        Keyword Arguments:
+            conf (dict): dictionary of configuration options
+
+        Returns:
+            BookmarksObject: mutated bookmarks_obj
+        """
+        if conf is None:
+            conf = dict(load_plugins=True)
+        load_plugins = conf.get('load_plugins')
+        if load_plugins:
+            plugin_classes = [x[1] for x in PluginManager.get_plugins()]
+            available_plugins = plugin_classes
+            log.debug("available_plugins=%s" % available_plugins)
+
+            if load_plugins is True:
+                plugins_to_load = available_plugins
+            else:
+                plugins_to_load = [
+                    x for x in available_plugins if x.__name__ in load_plugins]
+
+            for Plugin in plugins_to_load:
+                log.debug("Plugin: %s" % Plugin)
+                plugin = Plugin(conf)
+                bookmarks_obj = plugin.process_bookmarks(bookmarks_obj)
+            return bookmarks_obj
         else:
-            folder['children'] = default_bookmarklets
-        return folder
-
+            raise Exception("conf['load_plugins'] is not True or a list")
 
     @staticmethod
-    def build_chrome_folder(ids):
-        return {
-            "type":'folder',
-            "id": ids.next(),
-            "name": "chrome",
-            "date_added": 0,
-            "date_modified": 0,
-            "children": [
-                {
-                    "url": "chrome://bookmarks",
-                    "type":'url',
-                    "id": ids.next(),
-                    "name": "chrome://bookmarks",
-                    "date_added": 0,
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://history",
-                    "type":'url',
-                    "id": ids.next(),
-                    "name": "chrome://history",
-                    "date_added": 0,
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://extensions",
-                    "type":'url',
-                    "id": ids.next(),
-                    "name": "chrome://extensions",
-                    "date_added": 0,
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://plugins",
-                    "type":'url',
-                    "id": ids.next(),
-                    "name": "chrome://plugins",
-                    "date_added": 0,
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://flags",
-                    "type":'url',
-                    "id": ids.next(),
-                    "name": "chrome://flags",
-                    "date_added": 0,
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://settings",
-                    "type":'url',
-                    "id": ids.next(),
-                    "name": "chrome://settings",
-                    "date_added": 0,
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://flags",
-                    "type":'url',
-                    "id": ids.next(),
-                    "name": "chrome://flags",
-                    "date_added": 0,
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://apps",
-                    "type":'url',
-                    "id": ids.next(),
-                    "name": "chrome://apps",
-                    "date_added": 0,
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://downloads",
-                    "type":'url',
-                    "id": ids.next(),
-                    "name": "chrome://downloads",
-                    "date_added": 0,
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://chrome",
-                    "type":'url',
-                    "id": ids.next(),
-                    "name": "chrome://chrome",
-                    "date_added": 0,
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://chrome-urls",
-                    "type":'url',
-                    "id": ids.next(),
-                    "name": "chrome://chrome-urls",
-                    "date_added": 0,
-                    "date_modified": 0,
-                },
-            ],
-        }
+    def to_json(bookmarks_dict):
+        output_json = json.dumps(bookmarks_dict, indent=2)
+        assert json.loads(output_json) == bookmarks_dict
+        return output_json
 
     @staticmethod
     def overwrite_bookmarks_json(data, bookmarks_path, prompt=True):
@@ -589,9 +437,11 @@ class ChromiumBookmarks(object):
         """
         if dest is None:
             dest = self.bookmarks_path
-        output = ChromiumBookmarks.rewrite_bookmarks_json(self.bookmarks_path)
+        bookmarks_dict = ChromiumBookmarks.transform_bookmarks_dict(
+            self.bookmarks_path)
+        bookmarks_json = ChromiumBookmarks.to_json(bookmarks_dict)
         return ChromiumBookmarks.overwrite_bookmarks_json(
-            output,
+            bookmarks_json,
             self.bookmarks_path,
             prompt=prompt)
 
@@ -695,107 +545,6 @@ def list_profile_bookmarks(prefix=None,
             yield x
 
 
-
-import unittest
-
-
-class Test_promiumbookmarks(unittest.TestCase):
-
-    def setUp(self):
-        self.bookmarks_path = './tests/data/Bookmarks'
-
-    def log(self, *args):
-        print(args)
-
-    def test_01_list_bookmarks(self):
-        output = list_profile_bookmarks()
-        self.assertTrue(hasattr(output, '__iter__'))
-        output = list(output)
-        self.assertTrue(len(output))
-        output = list_profile_bookmarks(show_backups=True)
-        self.assertTrue(hasattr(output, '__iter__'))
-        output = list(output)
-        self.assertTrue(len(output))
-
-    def test_11_read_bookmarks(self):
-        bookmarks = ChromiumBookmarks.read_bookmarks(self.bookmarks_path)
-        self.assertTrue(bookmarks)
-
-    def a_test_21_print_bookmarks(self):
-        bookmarks = ChromiumBookmarks.read_bookmarks(self.bookmarks_path)
-        output = ChromiumBookmarks.print_bookmarks(bookmarks)
-        self.assertTrue(output)
-
-    def test_31_walk_bookmarks(self):
-        bookmarks = ChromiumBookmarks.read_bookmarks(self.bookmarks_path)
-        self.assertTrue(bookmarks)
-        bookmarks = itertools.chain(
-            ChromiumBookmarks.walk_bookmarks(
-                bookmarks['roots']['bookmark_bar']), ChromiumBookmarks.walk_bookmarks(
-                bookmarks['roots']['other']))
-        bookmarks = list(bookmarks)
-        length = len(bookmarks)
-        self.log("n: %d" % length)
-        counts = collections.Counter(b.id for b in bookmarks)
-        duplicates = [(k, v) for (k, v) in counts.iteritems() if v > 1]
-        self.log("counts: %r" % duplicates)
-        self.assertFalse(duplicates)
-
-    def test_33_iter_bookmarks(self):
-        bookmarks = list(ChromiumBookmarks.iter_bookmarks(self.bookmarks_path))
-        self.assertTrue(bookmarks)
-
-    def test_41_reorganize_by_date(self):
-        bookmarks = list(ChromiumBookmarks.iter_bookmarks(self.bookmarks_path))
-        output = ChromiumBookmarks.reorganize_by_date(bookmarks)
-        self.assertTrue(output)
-        json_output = json.dumps(output, indent=2)
-        self.assertTrue(json_output)
-
-    def test_51_rewrite_bookmarks(self):
-        bookmarks_json = ChromiumBookmarks.rewrite_bookmarks_json(
-            self.bookmarks_path)
-        ChromiumBookmarks.overwrite_bookmarks_json(
-            bookmarks_json, self.bookmarks_path,
-            prompt=False)
-        output_json = json.dumps(bookmarks_json, indent=2)
-        self.assertTrue(json.loads(output_json), bookmarks_json)
-
-    def test_60_get_option_parser(self):
-        prs = get_option_parser()
-        self.assertTrue(prs)
-
-    def test_61_main(self):
-        import sys
-        __sys_argv = sys.argv
-        sys.argv = [__file__]
-        try:
-            with self.assertRaises(IOError):
-                output = main()
-                self.assertEqual(output, 0)
-                output = main('-v')
-                self.assertEqual(output, 0)
-                output = main('--print-all')
-                self.assertEqual(output, 0)
-
-            output = main('-v', './tests/data/Bookmarks')
-            self.assertEqual(output, 0)
-            output = main('--print-all', './tests/data/Bookmarks')
-            self.assertEqual(output, 0)
-        finally:
-            sys.argv = __sys_argv
-
-    def test_91_promiumbookmarks(self):
-        cb = ChromiumBookmarks(self.bookmarks_path)
-        output = list(cb)
-        self.assertTrue(output)
-        output = cb.reorganized_by_date()
-        self.assertTrue(output)
-
-        output = cb.overwrite(prompt=False)
-        self.assertTrue(output)
-
-
 def get_option_parser():
     import optparse
     prs = optparse.OptionParser(usage="%prog : [-l|-L] [-p|-d|-w] [options]")
@@ -866,8 +615,8 @@ def main(*args):
 
     if opts.list_profile_bookmarks_show_backups:
         for path in list_profile_bookmarks(
-            opts.list_profile_bookmarks_show_backups,
-            show_backups=True):
+                opts.list_profile_bookmarks_show_backups,
+                show_backups=True):
             print(path)
         return 0
 
@@ -891,5 +640,4 @@ def main(*args):
 
 
 if __name__ == "__main__":
-    import sys
     sys.exit(main())

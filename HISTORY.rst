@@ -1,7 +1,14 @@
 .. :changelog:
 
 History
--------
+=======
+
+0.3.0 (2015-02-08)
+-------------------
+
+* ENH: Refactor to promiumbookmarks.plugins
+* TST: Move tests to tests/test_promiumbookmarks.py
+* DOC: README.rst, HISTORY.txt: headings
 
 0.2.5 (2014-12-25)
 -------------------
