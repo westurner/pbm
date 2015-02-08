@@ -19,7 +19,7 @@ test_requirements = [
 
 setup(
     name='promiumbookmarks',
-    version='0.2.5',
+    version='0.3.0',
     description=(
         'promiumbookmarks works with Chrome and Chromium bookmarks JSON.'),
     long_description=readme + '\n\n' + history,
