@@ -132,7 +132,6 @@ class TestPromiumbookmarks(unittest.TestCase):
         import promiumbookmarks.plugins.bookmarkletsfolder
         import promiumbookmarks.plugins.chromefolder
         import promiumbookmarks.plugins.datebasedfolders
-        import promiumbookmarks.plugins.other
         import promiumbookmarks.plugins.allinone
         import promiumbookmarks.plugins.starred
 
