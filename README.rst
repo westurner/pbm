@@ -21,7 +21,7 @@ promiumbookmarks works with Chrome and Chromium bookmarks JSON.
 .. * Documentation: https://promiumbookmarks.readthedocs.org.
 
 Features
---------
+========
 
 * List Chrome and Chromium Bookmarks JSON files (``-l`` / ``-L``)
 * Print all bookmarks (``--print-all``)
@@ -47,7 +47,7 @@ Bookmarks Bar Folders
 
 
 Installation
---------------
+==============
 Install from PyPI with pip:
 
 .. code:: bash
@@ -62,7 +62,7 @@ Development:
 
 
 Usage
--------
+=======
 List available ``Bookmarks`` files in Chrome and Chromium User Data
 directories:
 
