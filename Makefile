@@ -42,7 +42,8 @@ lint:
 
 test:
 	# python setup.py test
-	$(PROMIUMBOOKMARKS) -t
+	#$(PROMIUMBOOKMARKS) -t
+	nosetests ./tests/test_promiumbookmarks.py
 
 nosetest:
 	nosetests --with-coverage ./promiumbookmarks.py
