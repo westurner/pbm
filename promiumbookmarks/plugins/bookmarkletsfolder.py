@@ -55,7 +55,14 @@ class BookmarkletsFolderPlugin(plugins.PromiumPlugin):
              'data:text/html, <html style="font-family:Helvetica; background: #333; width: 400px; margin: 0 auto; color: white;" contenteditable><title>todo</title>==================<br>todo<br>==================<br>.',
              "type": 'url',
              "id": ids.next(),
-             "name": "notetab",
+             "name": "notetab (400px)",
+             "date_added": 0,
+             "date_modified": 0, },
+            {"url":
+             'data:text/html, <html style="font-family:Helvetica; background: #333; width: 800px; margin: 0 auto; color: white;" contenteditable><title>todo</title>==================<br>todo<br>==================<br>.',
+             "type": 'url',
+             "id": ids.next(),
+             "name": "notetab (800px)",
              "date_added": 0,
              "date_modified": 0, },
             {"url":
