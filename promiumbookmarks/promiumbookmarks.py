@@ -202,7 +202,9 @@ class ChromiumBookmarks(object):
                         continue
                     _item_type = item.get('type')
                     if _item_type == 'folder':
-                        for b in ChromiumBookmarks.walk_bookmarks(item):
+                        for b in ChromiumBookmarks.walk_bookmarks(
+                            item,
+                            filterfunc=filterfunc):
                             yield b
                     elif _item_type == 'url':
                         yield URL.from_url_node(item)
