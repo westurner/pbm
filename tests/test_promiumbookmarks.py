@@ -129,6 +129,7 @@ class TestPromiumbookmarks(unittest.TestCase):
 
     def test_81_plugins(self):
         import promiumbookmarks.plugins.null
+        import promiumbookmarks.plugins.dedupe
         import promiumbookmarks.plugins.bookmarkletsfolder
         import promiumbookmarks.plugins.chromefolder
         import promiumbookmarks.plugins.datebasedfolders

@@ -325,10 +325,13 @@ class ChromiumBookmarks(object):
             x for x in bookmarks_dict['roots']['bookmark_bar']['children']
             if x and hasattr(x, 'get') and x.get('name') == 'quicklinks']
 
+        import plugins.dedupe as dd
         import plugins.bookmarkletsfolder as bf
         import plugins.datebasedfolders as dbf
         import plugins.chromefolder as cf
 
+        bookmarks_obj = (
+            dd.DedupePlugin(conf).process_bookmarks(bookmarks_obj))
         bookmarks_obj = (
             dbf.DateBasedFoldersPlugin(conf).process_bookmarks(bookmarks_obj))
         bookmarks_obj = (
@@ -347,7 +350,7 @@ class ChromiumBookmarks(object):
                 "type": 'folder',
                 "id": bookmarks_obj.get_ids().next(),
                 "name": "queue",
-                "date_added": 0,
+                "date_added": '13051060469477976',
                 "date_modified": 0,
                 "children": []})
 
