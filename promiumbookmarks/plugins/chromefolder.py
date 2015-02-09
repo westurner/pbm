@@ -21,7 +21,7 @@ class ChromeFolderPlugin(plugins.PromiumPlugin):
             "type": 'folder',
             "id": ids.next(),
             "name": "chrome",
-            "date_added": 0,
+            "date_added": '13051060469477976',
             "date_modified": 0,
             "children": [
                 {
@@ -29,7 +29,7 @@ class ChromeFolderPlugin(plugins.PromiumPlugin):
                     "type": 'url',
                     "id": ids.next(),
                     "name": "chrome://bookmarks",
-                    "date_added": 0,
+                    "date_added": '13051060469477976',
                     "date_modified": 0,
                 },
                 {
@@ -37,7 +37,7 @@ class ChromeFolderPlugin(plugins.PromiumPlugin):
                     "type": 'url',
                     "id": ids.next(),
                     "name": "chrome://history",
-                    "date_added": 0,
+                    "date_added": '13051060469477976',
                     "date_modified": 0,
                 },
                 {
@@ -45,7 +45,7 @@ class ChromeFolderPlugin(plugins.PromiumPlugin):
                     "type": 'url',
                     "id": ids.next(),
                     "name": "chrome://extensions",
-                    "date_added": 0,
+                    "date_added": '13051060469477976',
                     "date_modified": 0,
                 },
                 {
@@ -53,7 +53,7 @@ class ChromeFolderPlugin(plugins.PromiumPlugin):
                     "type": 'url',
                     "id": ids.next(),
                     "name": "chrome://plugins",
-                    "date_added": 0,
+                    "date_added": '13051060469477976',
                     "date_modified": 0,
                 },
                 {
@@ -61,7 +61,7 @@ class ChromeFolderPlugin(plugins.PromiumPlugin):
                     "type": 'url',
                     "id": ids.next(),
                     "name": "chrome://flags",
-                    "date_added": 0,
+                    "date_added": '13051060469477976',
                     "date_modified": 0,
                 },
                 {
@@ -69,7 +69,7 @@ class ChromeFolderPlugin(plugins.PromiumPlugin):
                     "type": 'url',
                     "id": ids.next(),
                     "name": "chrome://settings",
-                    "date_added": 0,
+                    "date_added": '13051060469477976',
                     "date_modified": 0,
                 },
                 {
@@ -77,7 +77,7 @@ class ChromeFolderPlugin(plugins.PromiumPlugin):
                     "type": 'url',
                     "id": ids.next(),
                     "name": "chrome://flags",
-                    "date_added": 0,
+                    "date_added": '13051060469477976',
                     "date_modified": 0,
                 },
                 {
@@ -85,7 +85,7 @@ class ChromeFolderPlugin(plugins.PromiumPlugin):
                     "type": 'url',
                     "id": ids.next(),
                     "name": "chrome://apps",
-                    "date_added": 0,
+                    "date_added": '13051060469477976',
                     "date_modified": 0,
                 },
                 {
@@ -93,7 +93,7 @@ class ChromeFolderPlugin(plugins.PromiumPlugin):
                     "type": 'url',
                     "id": ids.next(),
                     "name": "chrome://downloads",
-                    "date_added": 0,
+                    "date_added": '13051060469477976',
                     "date_modified": 0,
                 },
                 {
@@ -101,7 +101,7 @@ class ChromeFolderPlugin(plugins.PromiumPlugin):
                     "type": 'url',
                     "id": ids.next(),
                     "name": "chrome://chrome",
-                    "date_added": 0,
+                    "date_added": '13051060469477976',
                     "date_modified": 0,
                 },
                 {
@@ -109,7 +109,7 @@ class ChromeFolderPlugin(plugins.PromiumPlugin):
                     "type": 'url',
                     "id": ids.next(),
                     "name": "chrome://chrome-urls",
-                    "date_added": 0,
+                    "date_added": '13051060469477976',
                     "date_modified": 0,
                 },
             ],
