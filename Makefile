@@ -25,6 +25,7 @@ clean-build:
 	rm -fr build/
 	rm -fr dist/
 	rm -fr *.egg-info
+	find . -name '.ropeproject' -print0 | xargs rm -rfv
 
 clean-pyc:
 	find . -name '*.pyc' -exec rm -f {} +
