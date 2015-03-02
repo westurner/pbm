@@ -130,7 +130,7 @@ class StarredFolderPlugin(plugins.PromiumPlugin):
         bookmark_name = starcount_max_bookmark.get('name')
         if starcount_max:
             bookmark_name = (
-                "[%s] %s" % (
+                "[X%s] %s" % (
                     starcount * 'O',
                     bookmark_name))
         output['name'] = bookmark_name
