@@ -2,115 +2,40 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
+import promiumbookmarks.main as pb
 import promiumbookmarks.plugins as plugins
 
 class ChromeFolderPlugin(plugins.PromiumPlugin):
-    def process_bookmarks(self, bookmarks_obj):
-        bookmarks_dict = bookmarks_obj.bookmarks_dict
-        ids = bookmarks_obj.ids
+    folder_name = 'chrome'
+    urls = [
+        "chrome://bookmarks",
+        "chrome://history",
+        "chrome://extensions",
+        "chrome://plugins",
+        "chrome://settings",
+        "chrome://flags",
+        "chrome://apps",
+        "chrome://downloads",
+        "chrome://chrome",
+        "chrome://chrome-urls",
+    ]
 
+    def preprocess_bookmarks(self, bookmarks_obj):
+        return bookmarks_obj.remove_bookmark_bar_folders(self.folder_name)
+
+    def postprocess_bookmarks(self, bookmarks_obj):
         # always overwrite the 'chrome' folder
-        bookmarks_dict['roots']['bookmark_bar']['children'].append(
-            self.build_chrome_folder(ids))
+        return bookmarks_obj.add_bookmark_bar_folder(
+            folder_name=self.folder_name,
+            folder_nodes=self.build_chrome_nodes(bookmarks_obj.ids))
 
-        return bookmarks_obj
-
-    @staticmethod
-    def build_chrome_folder(ids):
-        return {
-            "type": 'folder',
+    def build_chrome_nodes(self, ids):
+        date_added = plugins.get_datetime_current()
+        return [({
+            "type": 'url',
+            "url": url,
             "id": ids.next(),
-            "name": "chrome",
-            "date_added": '13051060469477976',
-            "date_modified": 0,
-            "children": [
-                {
-                    "url": "chrome://bookmarks",
-                    "type": 'url',
-                    "id": ids.next(),
-                    "name": "chrome://bookmarks",
-                    "date_added": '13051060469477976',
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://history",
-                    "type": 'url',
-                    "id": ids.next(),
-                    "name": "chrome://history",
-                    "date_added": '13051060469477976',
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://extensions",
-                    "type": 'url',
-                    "id": ids.next(),
-                    "name": "chrome://extensions",
-                    "date_added": '13051060469477976',
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://plugins",
-                    "type": 'url',
-                    "id": ids.next(),
-                    "name": "chrome://plugins",
-                    "date_added": '13051060469477976',
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://flags",
-                    "type": 'url',
-                    "id": ids.next(),
-                    "name": "chrome://flags",
-                    "date_added": '13051060469477976',
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://settings",
-                    "type": 'url',
-                    "id": ids.next(),
-                    "name": "chrome://settings",
-                    "date_added": '13051060469477976',
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://flags",
-                    "type": 'url',
-                    "id": ids.next(),
-                    "name": "chrome://flags",
-                    "date_added": '13051060469477976',
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://apps",
-                    "type": 'url',
-                    "id": ids.next(),
-                    "name": "chrome://apps",
-                    "date_added": '13051060469477976',
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://downloads",
-                    "type": 'url',
-                    "id": ids.next(),
-                    "name": "chrome://downloads",
-                    "date_added": '13051060469477976',
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://chrome",
-                    "type": 'url',
-                    "id": ids.next(),
-                    "name": "chrome://chrome",
-                    "date_added": '13051060469477976',
-                    "date_modified": 0,
-                },
-                {
-                    "url": "chrome://chrome-urls",
-                    "type": 'url',
-                    "id": ids.next(),
-                    "name": "chrome://chrome-urls",
-                    "date_added": '13051060469477976',
-                    "date_modified": 0,
-                },
-            ],
-        }
+            "name": url,
+            "date_added": date_added,
+            "date_modified": date_added,
+            }) for url in self.urls]

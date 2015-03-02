@@ -3,61 +3,173 @@
 from __future__ import print_function
 
 import collections
-import urlparse
-from promiumbookmarks.promiumbookmarks import Folder
+import logging
+import re
+
 import promiumbookmarks.plugins as plugins
 
 # TODO: Folder, URL, bookmarks_bar structure
 
+URL_STAR_REGEX = re.compile(r'(.*?)([\#]*)$')
+
+log = logging.getLogger(__name__)
 
 
-class MultiStarredFolder(plugins.PromiumPlugin):
+def count_stars(chars):
+    """
+    Count the number of trailing '#' (~== '#+$')
 
-    def process_bookmarks(self, bookmarks_obj):
+    >>> count_stars("http://example.org/p?q#fragment####")
+    <<< 4
+    """
+    count = 0
+    for c in chars[::-1]:
+        if c != '#':
+            break
+        count += 1
+    return count
+
+
+def split_starcount_fragment(urlstr):
+    """
+    Count the number of trailing '#' (~== '#+$')
+
+    >>> count_stars("http://example.org/p?q#fragment####")
+    <<< 4
+    """
+    base_url = urlstr
+    starstr = None
+    starcount = 0
+    if urlstr:
+        rgxm = URL_STAR_REGEX.match(urlstr)
+        if rgxm:
+            base_url, starstr = rgxm.groups()
+            starcount = len(starstr)
+    return base_url, starstr, starcount
+
+
+class StarredFolderPlugin(plugins.PromiumPlugin):
+    STARRED_FOLDER_TITLE = 'starred'
+    folder_name = 'starred'
+
+    def preprocess_bookmarks(self, bookmarks_obj):
         """
-        add_multiples_to_one_folder
+        Remove the 'starred' folder
         """
-        urls_map = collections.OrderedDict()
+        return bookmarks_obj.remove_bookmark_bar_folders(self.folder_name)
 
-        def get_base_url(bookmark):
-            url = urlparse.urlparse(bookmark)
-            if url.path.endswith('#'):
-                return url.with_multi_fragments_replaced()
+    def postprocess_bookmarks(self, bookmarks_obj):
+        """
+        Collect bookmarks ending with one or more ``#`` characters
+        into a 'starred' folder.
 
-        for bookmark in bookmarks_obj.bookmarks_list:
-            if bookmark['url'].endswith('#'):
-                url_key = get_base_url(bookmark['url'])
-                urls_map[url_key].append(bookmark)
+        # example: http://example.org/path?query#fragment[#*]
+        """
+        starred_folder_node = self.build_bookmarks_json(bookmarks_obj)
+        return bookmarks_obj.add_bookmark_bar_folder(
+            folder_name=self.folder_name,
+            folder=starred_folder_node)
 
-        def count_hashtags(url):
-            if not url:
-                return
-            count = [c for c in url[::-1] if c == '#']
-            return count
+    @staticmethod
+    def build_base_url_map(bookmarks_list):
+        base_url_map = collections.OrderedDict()
+        for bookmark in bookmarks_list:
+            if 'url' in bookmark:
+                base_url, starstr, starcount = split_starcount_fragment(
+                    bookmark.get('url'))
+                if starcount:
+                    bookmark_dict = bookmark.copy()
+                    bookmark_dict['base_url'] = base_url
+                    bookmark_dict['starcount'] = starcount
+                    base_url_map.setdefault(base_url, [])
+                    base_url_map[base_url].append(bookmark_dict)
+        return base_url_map
 
-        def get_longest(bookmarks):
-            n = 0
-            current = None
-            for b in bookmarks:
-                if len(b.url) > n:
-                    n = len(b.url)
-                    current = b
-            return current
+    @staticmethod
+    def get_starred_bookmark(bookmarks_list):
+        starcount_max = None
+        starcount_max_bookmark = None
+        # earliest_date_added = None
+        # earliest = None
+        latest_date_added = 0
+        latest = None
+        for b in bookmarks_list:
+            (base_url, starstr, starcount) = (
+                split_starcount_fragment(b.get('url')))
+            if starcount_max is not None:
+                if starcount > starcount_max:
+                    starcount_max_bookmark = b
+                    starcount_max = starcount
+            else:
+                starcount_max_bookmark = b
+                starcount_max = starcount
+            date_added = b.get('date_added')
+            if date_added:
+                date_added = int(date_added)
+#                   if earliest_date_added:
+#                       if date_added < earliest_date_added:
+#                           earliest_date_added = date_added
+#                           earliest = b
+#                   else:
+#                       earliest_date_added = date_added
+#                       earliest = b
+                if latest_date_added:
+                    if date_added > latest_date_added:
+                        latest_date_added = date_added
+                        latest = b
+                else:
+                    latest_date_added = date_added
+                    latest = b
+            else:
+                log.debug('date_added: 0')
 
-        urls = []
-        for url_key, bookmarks in urls_map.items():
-            longest = get_longest(bookmarks)
-            count = count_hashtags(longest)
-            urls.append({
-                'type': 'url',
-                'url': longest.url,
-                "title": "(%d) %s [ XSTARS ]" % (count, longest.title),
-                "date_added": longest.date_added,  # TODO: shortest.date_added
-                "date_modified": longest.date_modified,
-            })
+        output = collections.OrderedDict()
+        output['type'] = 'url'
+        output['starcount'] = starcount_max
+        output['url'] = starcount_max_bookmark.get('url')
+        bookmark_name = starcount_max_bookmark.get('name')
+        if starcount_max:
+            bookmark_name = (
+                "[%s] %s" % (
+                    starcount * '#',
+                    bookmark_name))
+        output['name'] = bookmark_name
+        output['date_added'] = latest_date_added
+        output['date_modified'] = latest.get('date_modified')
+        # starcount
+        # starcount_max_bookmark,
+        # earliest_date_added,
+        # earliest
+        # latest_date_added,
+        # latest,
+        return output
 
-        bookmarks_dict = bookmarks_obj.bookmarks_dict.copy()
-        bookmarks_dict['bookmarks_bar']['multiples'] = Folder(
-            children=urls)
-        bookmarks_obj.bookmarks_dict = bookmarks_dict
-        return bookmarks_obj
+    @classmethod
+    def build_bookmarks_json(cls, bookmarks_obj):
+        base_url_map = cls.build_base_url_map(bookmarks_obj.bookmarks_list)
+        bookmarks_urls = []
+        latest_date_added = None
+        latest = None
+        ids = bookmarks_obj.get_ids()
+        for base_url, bookmarks_list in base_url_map.items():
+            bookmark_dict = cls.get_starred_bookmark(bookmarks_list)
+            bookmark_dict['id'] = ids.next()
+            bookmarks_urls.append(bookmark_dict)
+
+            date_added = bookmark_dict.get('date_added')
+            if latest_date_added:
+                if date_added and date_added > latest_date_added:
+                    latest_date_added = date_added
+                    latest = bookmark_dict
+            else:
+                latest_date_added = date_added
+                latest = bookmark_dict
+        output = {
+            'type': 'folder',
+            'name': 'starred',
+            'date_added': latest_date_added,
+            'date_modified': latest.get('date_modified') if latest else None,
+            'children': bookmarks_urls[::-1],  # show latest (in sequence) first
+            'id': ids.next(),
+        }
+        return output

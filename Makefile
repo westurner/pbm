@@ -83,7 +83,7 @@ CHROMIUM_DIR=$${HOME}/Library/Application\ Support/Google/Chrome
 CHROMIUM_PROFILE=$(CHROMIUM_DIR)/$(PROFILE_NAME)
 CHROMIUM_BOOKMARKS=$(CHROMIUM_PROFILE)/Bookmarks
 
-PROMIUMBOOKMARKS=./promiumbookmarks/promiumbookmarks.py
+PROMIUMBOOKMARKS=./promiumbookmarks/main.py
 
 debug:
 	@echo "---"

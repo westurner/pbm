@@ -1,14 +1,10 @@
 
 import collections
+import logging
 
 import promiumbookmarks.plugins as plugins
 
-if not hasattr(dict, 'iteritems'):
-    def itervalues(x):
-        return x.itervalues()
-else:
-    def itervalues(x):
-        return x.values()
+log = logging.getLogger(__name__)
 
 
 class DedupeObj(object):
@@ -24,7 +20,7 @@ class DedupeObj(object):
                 self.dict[key] = True
                 return False
             else:
-                print("duplicate: %r" % node)
+                log.debug("duplicate: %r" % node)
                 return True
         else:
             raise Exception(node)
@@ -32,7 +28,7 @@ class DedupeObj(object):
 
 
 class DedupePlugin(plugins.PromiumPlugin):
-    def process_bookmarks(self, bookmarks_obj):
+    def preprocess_bookmarks(self, bookmarks_obj):
         bookmarks_dict = bookmarks_obj.bookmarks_dict
         bookmarks_obj.bookmarks_dict = (
             self.dedupe_bookmarks_dict(bookmarks_dict))
@@ -80,7 +76,7 @@ class DedupePlugin(plugins.PromiumPlugin):
         _type = node.get('type')
         if _type == 'folder':
             folder = node
-            for item in node['children']:
+            for item in node['children'] or []:
                 if not (item and hasattr(item, 'get') and 'type' in item):
                     continue
                 _item_type = item.get('type')
@@ -91,7 +87,11 @@ class DedupePlugin(plugins.PromiumPlugin):
                         folder=folder)
                 elif _item_type == 'url':
                     if dedupe_obj.is_duplicate_bookmark(item):
+                        _len_before = len(folder['children'])
                         folder['children'].remove(item)
+                        _len_after = len(folder['children'])
+                        if _len_after >= _len_before:
+                            raise Exception(folder['children'])
         elif _type == 'url':
             if dedupe_obj.is_duplicate_bookmark(node):
                 if folder is None:

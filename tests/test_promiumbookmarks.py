@@ -10,13 +10,17 @@ Tests for `promiumbookmarks` module.
 
 import unittest
 
-from promiumbookmarks import promiumbookmarks
-promiumbookmarks
+import promiumbookmarks
+import promiumbookmarks.main as pb
 
 import collections
 import itertools
 import json
+import logging
 
+log = logging.getLogger(__name__)
+
+promiumbookmarks
 
 class TestPromiumbookmarks(unittest.TestCase):
 
@@ -30,13 +34,15 @@ class TestPromiumbookmarks(unittest.TestCase):
         pass
 
     def test_00_imports(self):
-        import promiumbookmarks.promiumbookmarks as pb
-        pb
-        import promiumbookmarks.plugins.datebasedfolders as dbf
-        dbf
+        import promiumbookmarks.main as pb
+        self.assertTrue(pb)
+        import promiumbookmarks.plugins as plugins
+        self.assertTrue(plugins)
+        import promiumbookmarks.plugins.datefolders as dbf
+        self.assertTrue(dbf)
 
     def test_01_list_bookmarks(self):
-        from promiumbookmarks.promiumbookmarks import list_profile_bookmarks
+        from promiumbookmarks.main import list_profile_bookmarks
         output = list_profile_bookmarks()
         self.assertTrue(hasattr(output, '__iter__'))
         output = list(output)
@@ -47,18 +53,32 @@ class TestPromiumbookmarks(unittest.TestCase):
         self.assertTrue(len(output))
 
     def test_11_read_bookmarks(self):
-        from promiumbookmarks.promiumbookmarks import ChromiumBookmarks
+        from promiumbookmarks.main import ChromiumBookmarks
         bookmarks = ChromiumBookmarks.read_bookmarks(self.bookmarks_path)
         self.assertTrue(bookmarks)
 
     def a_test_21_print_bookmarks(self):
-        from promiumbookmarks.promiumbookmarks import ChromiumBookmarks
+        from promiumbookmarks.main import ChromiumBookmarks
         bookmarks = ChromiumBookmarks.read_bookmarks(self.bookmarks_path)
         output = ChromiumBookmarks.print_bookmarks(bookmarks)
         self.assertTrue(output)
 
+    def check_bookmarks_list(self, bookmarks):
+        bookmarks = list(bookmarks)
+        length = len(bookmarks)
+        self.log(('n', length))
+        counts = collections.Counter(b.get('id') for b in bookmarks)
+        duplicates = [(k, v) for (k, v) in counts.iteritems() if v > 1]
+        self.log(("duplicate id counts:", repr(duplicates)))
+        #self.assertFalse(duplicates)
+
+    def test_30_check_bookmarks_list_ids(self):
+        import promiumbookmarks.main as pb
+        bookmarks_obj = pb.ChromiumBookmarks(bookmarks_path=self.bookmarks_path)
+        self.check_bookmarks_list(bookmarks_obj.bookmarks_list)
+
     def test_31_walk_bookmarks(self):
-        from promiumbookmarks.promiumbookmarks import ChromiumBookmarks
+        from promiumbookmarks.main import ChromiumBookmarks
         bookmarks = ChromiumBookmarks.read_bookmarks(self.bookmarks_path)
         self.assertTrue(bookmarks)
         bookmarks = itertools.chain(
@@ -66,47 +86,49 @@ class TestPromiumbookmarks(unittest.TestCase):
                 bookmarks['roots']['bookmark_bar']),
             ChromiumBookmarks.walk_bookmarks(
                 bookmarks['roots']['other']))
-        bookmarks = list(bookmarks)
-        length = len(bookmarks)
-        self.log("n: %d" % length)
-        counts = collections.Counter(b.id for b in bookmarks)
-        duplicates = [(k, v) for (k, v) in counts.iteritems() if v > 1]
-        self.log("counts: %r" % duplicates)
-        self.assertFalse(duplicates)
+        self.check_bookmarks_list(bookmarks)
 
     def test_33_iter_bookmarks(self):
-        from promiumbookmarks.promiumbookmarks import ChromiumBookmarks
+        from promiumbookmarks.main import ChromiumBookmarks
         bookmarks = list(ChromiumBookmarks.iter_bookmarks(self.bookmarks_path))
         self.assertTrue(bookmarks)
 
     def test_41_reorganize_by_date(self):
-        from promiumbookmarks.promiumbookmarks import ChromiumBookmarks
-        bookmarks = list(ChromiumBookmarks.iter_bookmarks(self.bookmarks_path))
-        import promiumbookmarks.plugins.datebasedfolders as dbf
-        print(dir(dbf))
-        output = dbf.DateBasedFoldersPlugin.reorganize_by_date(bookmarks)
-        self.assertTrue(output)
-        json_output = json.dumps(output, indent=2)
+        from promiumbookmarks.main import ChromiumBookmarks
+        bookmarks_obj = ChromiumBookmarks(bookmarks_path=self.bookmarks_path)
+        self.assertTrue(bookmarks_obj)
+        log.debug(self.bookmarks_path)
+        bookmarks_list = bookmarks_obj.bookmarks_list
+        self.assertTrue(bookmarks_list)
+        import promiumbookmarks.plugins.datefolders as dbf
+        bookmarks_list = dbf.DateBasedFoldersPlugin.reorganize_by_date(bookmarks_obj)
+        self.assertTrue(bookmarks_list)
+        bookmarks_obj.bookmarks_dict['roots']['bookmark_bar']['children'] = (
+            bookmarks_list)
+        json_output = bookmarks_obj.to_json()
+        self.assertTrue(json_output)
+        json_output = json.dumps(bookmarks_obj.bookmarks_dict, indent=2)
         self.assertTrue(json_output)
 
     def test_51_rewrite_bookmarks(self):
-        from promiumbookmarks.promiumbookmarks import ChromiumBookmarks
+        from promiumbookmarks.main import ChromiumBookmarks
         bookmarks_dict = ChromiumBookmarks.transform_bookmarks_dict(
-            self.bookmarks_path)
-        bookmarks_json = ChromiumBookmarks.to_json(bookmarks_dict)
+            bookmarks_path=self.bookmarks_path)
+        bookmarks_json = ChromiumBookmarks._to_json(bookmarks_dict)
         ChromiumBookmarks.overwrite_bookmarks_json(
-            bookmarks_json, self.bookmarks_path,
+            bookmarks_json,
+            self.bookmarks_path + '.test51.bak',
             prompt=False)
         output_json = json.dumps(bookmarks_dict, indent=2)
         self.assertTrue(json.loads(output_json), bookmarks_dict)
 
     def test_60_get_option_parser(self):
-        from promiumbookmarks.promiumbookmarks import get_option_parser
+        from promiumbookmarks.main import get_option_parser
         prs = get_option_parser()
         self.assertTrue(prs)
 
     def test_61_main(self):
-        from promiumbookmarks.promiumbookmarks import main
+        from promiumbookmarks.main import main
         import sys
         __sys_argv = sys.argv
         sys.argv = [__file__]
@@ -132,38 +154,198 @@ class TestPromiumbookmarks(unittest.TestCase):
         import promiumbookmarks.plugins.dedupe
         import promiumbookmarks.plugins.bookmarkletsfolder
         import promiumbookmarks.plugins.chromefolder
-        import promiumbookmarks.plugins.datebasedfolders
+        import promiumbookmarks.plugins.datefolders
+        import promiumbookmarks.plugins.quicklinks
         import promiumbookmarks.plugins.allinone
         import promiumbookmarks.plugins.starred
+        import promiumbookmarks.plugins.queuefolder
 
-    def test_91_promiumbookmarks(self):
-        from promiumbookmarks.promiumbookmarks import ChromiumBookmarks
+    def test_82_plugins_strlist(self):
+        import promiumbookmarks.plugins as plugins
+        DEFAULT_PLUGINS = [
+            'null',
+            'dedupe',
+            'bookmarkletsfolder',
+            'chromefolder',
+            'datefolders',
+            'quicklinks',
+            'starred',
+            'allinone',
+            'queuefolder',
+        ]
+        _plugins = plugins.PluginSequence.load_plugins(
+            pluginstrs=[])
+        self.assertEqual(_plugins, [])
+
+        _plugins = plugins.PluginSequence.load_plugins(
+            pluginstrs=DEFAULT_PLUGINS)
+        self.assertTrue(_plugins)
+
+        _plugins = plugins.PluginSequence.load_plugins()
+        self.assertTrue(_plugins)
+
+    def test_97_promiumbookmarks(self):
+        from promiumbookmarks.main import ChromiumBookmarks
         cb = ChromiumBookmarks(self.bookmarks_path)
         output = list(cb)
         self.assertTrue(output)
 
-        import promiumbookmarks.plugins.datebasedfolders as dbf
-        output = dbf.DateBasedFoldersPlugin().reorganize_by_date(output)
+        output = cb.overwrite(dest=self.bookmarks_path + '.test97.bak',
+                              prompt=False)
         self.assertTrue(output)
-
-        output = cb.overwrite(prompt=False)
-        self.assertTrue(output)
-
 
 #   class Test0PluginManager(unittest.TestCase):
 #       def test_00_get_plugins(self):
-#           from promiumbookmarks.promiumbookmarks import PluginManager
+#           from promiumbookmarks.main import PluginManager
 #           output = PluginManager.get_plugins()
 #           self.assertTrue(output)
 #           x = list(output)
 #           self.assertTrue(x)
 #
 #       def test_00_list_plugins(self):
-#           from promiumbookmarks.promiumbookmarks import PluginManager
+#           from promiumbookmarks.main import PluginManager
 #           output = PluginManager.list_plugins()
 #           self.assertTrue(output)
 #           x = list(output)
 #           self.assertTrue(x)
 
+import os
+import promiumbookmarks.plugins as plugins
+
+class PluginTestCase(unittest.TestCase):
+
+    bookmarks_path = os.path.join('tests', 'data', 'Bookmarks')
+    pluginstrs = ['null',]  # .NullPlugin
+    conf = {}
+    folder_name = None
+
+    def setUp(self):
+        self.pluginseq = plugins.PluginSequence(
+            pluginstrs=self.pluginstrs)
+        self.bookmarks_obj = pb.ChromiumBookmarks(
+            bookmarks_path=self.bookmarks_path)
+
+    # def tearDown(self):
+    #    pass
+
+    def test_000_plugin_interface(self):
+        plugin_funcs = plugins.PromiumPlugin.PLUGIN_FUNCS
+        for plugin in self.pluginseq.plugins:
+            self.assertTrue(
+                any(hasattr(plugin, func)
+                    for func in plugin_funcs))
+
+    def test_00_plugin_conf(self):
+        bookmarks_obj = self.bookmarks_obj
+        list_count = len(bookmarks_obj.bookmarks_list)
+        self.assertTrue(bookmarks_obj)
+        self.assertTrue(hasattr(bookmarks_obj, 'bookmarks_dict'))
+        bookmarks_dict = bookmarks_obj.bookmarks_dict
+        self.assertTrue(bookmarks_dict)
+        self.assertTrue(hasattr(bookmarks_obj, 'bookmarks_list'))
+        if list_count:
+            bookmarks_list = bookmarks_obj.bookmarks_list
+            self.assertTrue(bookmarks_list)
+
+    def test_10_build_pluginseq(self):
+        bookmarks_obj = self.pluginseq.run(
+            self.bookmarks_obj,
+            pluginstrs=self.pluginstrs)
+        self.assertTrue(bookmarks_obj)
+        #self.assertTrue(bookmarks_obj.bookmarks_dict)
+        #self.assertTrue(bookmarks_obj.bookmarks_list)
+
+    def get_bookmark_bar_nodes(self):
+        return (
+            self.bookmarks_obj
+            .bookmarks_dict['roots']['bookmark_bar']['children'])
+
+    def get_bookmark_bar_foldernames(self):
+        return [x.get('name') for x in self.get_bookmark_bar_nodes()]
+
+    def get_Other_Bookmarks_foldernames(self):
+        return [x.get('name') for x in (
+                self.bookmarks_obj.bookmarks_dict['roots']
+                .get('Other Bookmarks', {})
+                .get('children', []))]
+
+    def test_10_folderexists_after(self):
+        if self.folder_name:
+            folder_name = self.folder_name
+            #self.assertIn(folder_name, self.get_bookmark_bar_foldernames())
+            self.bookmarks_obj = self.pluginseq.run(self.bookmarks_obj)
+            self.assertIn(folder_name, self.get_bookmark_bar_foldernames())
+
+
+class TestChromeFolderPlugin(PluginTestCase):
+    pluginstrs = ['chromefolder']
+    folder_name = 'chrome'
+
+
+class TestDateBasedFoldersPlugin(PluginTestCase):
+    pluginstrs = ['datefolders']
+
+    def test_10_bookmarks_list(self):
+        self.assertTrue(self.bookmarks_obj.bookmarks_list)
+
+    def test_20_folderexists(self):
+        self.assertTrue(self.bookmarks_obj.bookmarks_list)
+        log.debug(self.bookmarks_obj.bookmarks_list)
+        self.bookmarks_obj = self.pluginseq.run(self.bookmarks_obj)
+        self.assertIn('2014', self.get_bookmark_bar_foldernames())
+
+
+class TestBookmarkletsFolderPlugin(PluginTestCase):
+    pluginstrs = ['bookmarkletsfolder']
+    folder_name = 'bookmarklets'
+
+
+class TestQueueFolderPlugin(PluginTestCase):
+    pluginstrs = ['queuefolder']
+    folder_name = 'queue'
+
+
+class TestQuicklinksFolderPlugin(PluginTestCase):
+    pluginstrs = ['quicklinks']
+    # folder_name = 'quicklinks'
+
+
+class TestAdditionalAllFolderPlugin(PluginTestCase):
+    pluginstrs = ['allinone']
+    folder_name__ = 'all'
+
+
+class TestStarredFolderPlugin(PluginTestCase):
+    pluginstrs = ['starred']
+    folder_name = 'starred'
+
+
+    def test_20_one_starred_folder_with_children(self):
+        self.assertTrue(self.bookmarks_obj.bookmarks_list)
+        log.debug(self.bookmarks_obj.bookmarks_list)
+        self.bookmarks_obj = self.pluginseq.run(self.bookmarks_obj)
+        starred_folders = [x for x in self.bookmarks_obj.bookmark_bar
+                   if x.get('name') == self.folder_name]
+        self.assertEqual(len(starred_folders), 1)
+        starred = starred_folders[0]
+        self.assertTrue(starred)
+        self.assertTrue(starred.get('children',[]))
+
+class TestAll(PluginTestCase):
+    pluginstrs = pb.plugins.PluginSequence.DEFAULT_PLUGINS
+
+    def test_20_queue_folder_at_end(self):
+        self.assertTrue(self.bookmarks_obj.bookmarks_list)
+        log.debug(self.bookmarks_obj.bookmarks_list)
+        self.bookmarks_obj = self.pluginseq.run(self.bookmarks_obj)
+        queue_folders = [x for x in self.bookmarks_obj.bookmark_bar
+                   if x.get('name') == 'queue']
+        self.assertEqual(len(queue_folders), 1)
+        queue = queue_folders[0]
+        self.assertTrue(queue)
+        self.assertEqual(queue.get('children'), [])
+
+
 if __name__ == '__main__':
-    unittest.main()
+    import sys
+    sys.exit(unittest.main())
