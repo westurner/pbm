@@ -42,7 +42,8 @@ lint:
 
 test:
 	# python setup.py test
-	$(PROMIUMBOOKMARKS) -t
+	#$(PROMIUMBOOKMARKS) -t
+	nosetests ./tests/test_promiumbookmarks.py
 
 nosetest:
 	nosetests --with-coverage ./promiumbookmarks.py
@@ -64,7 +65,11 @@ docs:
 	$(MAKE) -C docs html
 	open docs/_build/html/index.html
 
-release: clean
+test-readme:
+	pip install readme
+	python setup.py check -r -s
+
+release: clean test-readme
 	python setup.py sdist upload
 	python setup.py bdist_wheel upload
 
@@ -82,7 +87,7 @@ CHROMIUM_DIR=$${HOME}/Library/Application\ Support/Google/Chrome
 CHROMIUM_PROFILE=$(CHROMIUM_DIR)/$(PROFILE_NAME)
 CHROMIUM_BOOKMARKS=$(CHROMIUM_PROFILE)/Bookmarks
 
-PROMIUMBOOKMARKS=./promiumbookmarks/promiumbookmarks.py
+PROMIUMBOOKMARKS=./promiumbookmarks/main.py
 
 debug:
 	@echo "---"

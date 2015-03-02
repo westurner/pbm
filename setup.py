@@ -19,7 +19,7 @@ test_requirements = [
 
 setup(
     name='promiumbookmarks',
-    version='0.3.0',
+    version='0.4.0',
     description=(
         'promiumbookmarks works with Chrome and Chromium bookmarks JSON.'),
     long_description=readme + '\n\n' + history,
@@ -58,9 +58,18 @@ setup(
     ],
     entry_points="""
     [console_scripts]
-    promiumbookmarks = promiumbookmarks.promiumbookmarks:main
+    promiumbookmarks = promiumbookmarks.main:main
+
     [promium_plugins]
     null = promiumbookmarks.plugins.null:NullPlugin
+    allinone = promiumbookmarks.plugins.allinone:AdditionalAllFolderPlugin
+    bookmarkletsfolder = promiumbookmarks.plugins.bookmarkletsfolder:BookmarkletsFolderPlugin
+    chromefolder = promiumbookmarks.plugins.chromefolder:ChromeFolderPlugin
+    datefolder = promiumbookmarks.plugins.datefolders:DateFolderPlugin
+    dedupe = promiumbookmarks.plugins.dedupe:DedupePlugin
+    queuefolder = promiumbookmarks.plugins.queuefolder:QueueFolderPlugin
+    quicklinks = promiumbookmarks.plugins.quicklinks:QuicklinksFolderPlugin
+    starred = promiumbookmarks.plugins.starred:StarredFolderPlugin
     """,
     test_suite='tests',
     tests_require=test_requirements

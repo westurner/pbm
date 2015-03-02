@@ -4,23 +4,54 @@ from __future__ import print_function
 
 # from promiumbookmarks.promiumbookmarks import PromiumPlugin
 
+import collections
 import itertools
-import promiumbookmarks.promiumbookmarks as pb
+import logging
+import operator
+
+import promiumbookmarks.main as pb
 import promiumbookmarks.plugins as plugins
 
+log = logging.getLogger(__name__)
+
 class DateBasedFoldersPlugin(plugins.PromiumPlugin):
+    """
+    Organize bookmarks into year, year-month, year-month-day date-based folders
+
+    ::
+        2014
+            2014-08
+                2014-08-22
+
+    .. note:: This plugin should be called first, as it overwrites
+        bookmark_bar
+    """
 
     def process_bookmarks(self, bookmarks_obj):
-        bookmarks = bookmarks_obj.bookmarks_list
-        bookmarks_dict = bookmarks_obj.bookmarks_dict
-        output = self.reorganize_by_date(bookmarks)
-
-        # add the year, year-month, year-month-day date-based folders
-        bookmarks_dict['roots']['bookmark_bar']['children'] = output
+        #log.debug(('dbmarksobj', bookmarks_obj.bookmarks_dict, bookmarks_obj.bookmarks_list))
+        datefolder_nodes = self.reorganize_by_date(bookmarks_obj)
+        bookmark_bar = (
+            bookmarks_obj.bookmarks_dict['roots']['bookmark_bar']['children'])
+        existing_folders = collections.OrderedDict(
+            (x.get('name'), x) for x in bookmark_bar)
+        prev_n = None
+        for node in datefolder_nodes:
+            if node.get('type') == 'folder':
+                new_name = node.get('name')
+                existing = existing_folders.get(new_name)
+                if existing:
+                    n = bookmark_bar.index(existing)
+                    bookmark_bar[n] = node
+                    prev_n = n
+                else:
+                    n = prev_n + 1 if prev_n else 0
+                    bookmark_bar.insert(n, node)
+            #log.debug(('DATEFOLDER node', n, node))
+        #log.debug(('datefolder_nodes', datefolder_nodes))
         return bookmarks_obj
 
     @staticmethod
-    def reorganize_by_date(bookmarks, filterfunc=None):
+    def reorganize_by_date(bookmarks_obj, filterfunc=None):
         """
         Reorganize bookmarks into date-based folders
 
@@ -38,22 +69,38 @@ class DateBasedFoldersPlugin(plugins.PromiumPlugin):
         Returns:
             list[dict]: nested JSON-serializable bookmarks folder and url dicts
         """
-        id_max = max(int(b.id) for b in bookmarks)
-        ids = itertools.count(id_max + 1)
-
         # by default: include all items
         if filterfunc is True:
             filterfunc = lambda x: True
         elif filterfunc is None:
             filterfunc = pb.ChromiumBookmarks.chrome_filterfunc
 
-        bookmarks_iter = (b for b in bookmarks if filterfunc(b))
+        #id_max = max(int(b.get('id')) for b in bookmarks)
+        #ids = itertools.count(id_max + 1)
+        ids = bookmarks_obj.ids
+
+        bookmarks_iter_filtered = (
+            pb.URL.from_dict(b) for b in
+            bookmarks_obj.bookmarks_list
+            if filterfunc(b))
+
+        def longdate_ymd_key(x):
+            log.debug(('longdate_', x.date_added_))
+            return (x.date_added_.year,
+                    x.date_added_.month,
+                    x.date_added_.day)
+
+        bookmarks_list = sorted(bookmarks_iter_filtered,
+                                key=lambda x: x.date_added_)
+        log.info(('bookmarks_list_abc', bookmarks_list))
+        if not bookmarks_list:
+            return []
 
         bookmarks_by_day = itertools.groupby(
-            sorted(bookmarks_iter, key=lambda x: x.date_added_),
-            lambda x: (x.date_added_.year,
-                       x.date_added_.month,
-                       x.date_added_.day))
+            bookmarks_list,
+            lambda x: longdate_ymd_key(x))
+
+
         bookmarks_by_day = [(x, list(iterable))
                             for (x, iterable) in bookmarks_by_day]
 
@@ -70,7 +117,7 @@ class DateBasedFoldersPlugin(plugins.PromiumPlugin):
                 x,
                 iterable) in bookmarks_by_day_month_year]
 
-        output = []
+        nodes = []
         for year, by_year in bookmarks_by_day_month_year:
             year_folder = {
                 "type": "folder",
@@ -103,6 +150,6 @@ class DateBasedFoldersPlugin(plugins.PromiumPlugin):
                             day_folder['children'].append(b.to_json())
                     month_folder['children'].append(day_folder)
                 year_folder['children'].append(month_folder)
-            output.append(year_folder)
-
-        return output
+            nodes.append(year_folder)
+        log.debug(('date_nodes', nodes))
+        return nodes
