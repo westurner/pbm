@@ -3,7 +3,11 @@
 History
 =======
 
-0.4.0 (205-03-02)
+0.4.1 (2015-03-02)
+-------------------
+* BLD: Makefile, MANIFEST.in: rm .ropeproject, exclude.bak
+
+0.4.0 (2015-03-02)
 -------------------
 * ENH: plugins.starred: prefix with X
 * ENH: plugins.starred: O instead of # (searchable)
