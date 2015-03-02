@@ -3,6 +3,13 @@
 History
 =======
 
+0.4.0 (205-03-02)
+-------------------
+* ENH: plugins.starred: prefix with X
+* ENH: plugins.starred: O instead of # (searchable)
+* REF: promiumbookmarks.plugins plugin API
+* ENH: add "notetab (800px)" bookmarklet
+
 0.3.0 (2015-02-08)
 -------------------
 

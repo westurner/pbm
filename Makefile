@@ -65,7 +65,11 @@ docs:
 	$(MAKE) -C docs html
 	open docs/_build/html/index.html
 
-release: clean
+test-readme:
+	pip install readme
+	python setup.py check -r -s
+
+release: clean test-readme
 	python setup.py sdist upload
 	python setup.py bdist_wheel upload
 
