@@ -8,6 +8,8 @@ recursive-include tests *
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
 
+recursive-exclude .ropeproject
+
 recursive-include docs *.rst conf.py Makefile make.bat
 
-recursive-exclude tests/data *.bkp
+recursive-exclude tests/data *.bkp *.bak
