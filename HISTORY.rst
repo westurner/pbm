@@ -5,7 +5,7 @@ History
 
 0.4.1 (2015-03-02)
 -------------------
-* BLD: MANIFEST.in: exclude .ropeproject and .bak
+* BLD: Makefile, MANIFEST.in: rm .ropeproject, exclude.bak
 
 0.4.0 (2015-03-02)
 -------------------
