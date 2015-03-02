@@ -131,7 +131,7 @@ class StarredFolderPlugin(plugins.PromiumPlugin):
         if starcount_max:
             bookmark_name = (
                 "[%s] %s" % (
-                    starcount * '#',
+                    starcount * 'O',
                     bookmark_name))
         output['name'] = bookmark_name
         output['date_added'] = latest_date_added
