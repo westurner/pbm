@@ -87,6 +87,32 @@ class URL(
                 node.get('date_modified'))
         )
 
+    CONSOLE_FIELDS = [
+        'type',
+        'id',
+        'name',
+        'url',
+        'path',
+        'date_added_',
+        'date_modified_'
+    ]
+
+    def _to_console_strs(self):
+        for x in ['type','id','name']: # self.CONSOLE_FIELDS:
+            yield '# %-5s: %r' % (x, getattr(self, x))
+        yield self.url
+        for x in ['path']:
+            value = getattr(self, x)
+            if value:
+                yield '# %-5s: %r' % (x, value)
+        for x in ['date_added_', 'date_modified_']:
+            value = getattr(self, x)
+            if value:
+                yield '# %-14s: %r' % (x, value.isoformat())
+
+    def to_console_str(self):
+        return '\n'.join(self._to_console_strs())
+
 
 class Folder(
     namedtuple('Folder', (
@@ -768,7 +794,9 @@ def main(*args):
 
     if opts.print_all:
         for bookmark in cb:
-            print(bookmark)
+            url = URL.from_dict(bookmark)
+            print(url.to_console_str())
+            print("# --------------------")
     if opts.reorganized_by_date:
         output = cb.reorganized_by_date()
         print(output)
