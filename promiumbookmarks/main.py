@@ -98,20 +98,20 @@ class URL(
     ]
 
     def _to_console_strs(self):
-        for x in ['type','id','name']: # self.CONSOLE_FIELDS:
-            yield '# %-5s: %r' % (x, getattr(self, x))
+        for x in ['id']:
+            yield u'# %-5s: %s' % (x, getattr(self, x))
+        for attrlabel, x in [('ctime', 'date_added_'), ('mtime', 'date_modified_')]:
+            value = getattr(self, x)
+            if value:
+                yield u'# %-5s: %s' % (attrlabel, value.isoformat())
+        for x in ['path', 'name']:
+            value = getattr(self, x)
+            if value:
+                yield u'# %-5s: %s' % (x, value)
         yield self.url
-        for x in ['path']:
-            value = getattr(self, x)
-            if value:
-                yield '# %-5s: %r' % (x, value)
-        for x in ['date_added_', 'date_modified_']:
-            value = getattr(self, x)
-            if value:
-                yield '# %-14s: %r' % (x, value.isoformat())
 
     def to_console_str(self):
-        return '\n'.join(self._to_console_strs())
+        return u'\n'.join(self._to_console_strs())
 
 
 class Folder(
@@ -728,9 +728,20 @@ def get_option_parser():
                    dest='print_all',
                    action='store_true')
 
-    prs.add_option('-d', '--by-date',
-                   dest='reorganized_by_date',
+    prs.add_option('--print-json-link-list',
+                   dest='print_json_link_list',
                    action='store_true')
+
+    prs.add_option('-d', '--by-date', '--print-all-by-date',
+                   dest='sort_by_date',
+                   help='Sort by date_modified or date_added',
+                   action='store_true')
+
+    prs.add_option('-r', '--reverse',
+                   dest='sort_reverse',
+                   help='Reverse the sort order',
+                   action='store_true',
+                   default=False)
 
     prs.add_option('-w', '--overwrite',
                    dest='overwrite',
@@ -762,7 +773,7 @@ def main(*args):
     args = args and list(args) or sys.argv[1:]
     (opts, args) = prs.parse_args(args)
 
-    sys.stdout = codecs.getwriter('utf8')(sys.stdout)
+    #sys.stdout = codecs.getwriter('utf8')(sys.stdout)
     sys.stderr = codecs.getwriter('utf8')(sys.stderr)
 
     if not opts.quiet:
@@ -792,14 +803,28 @@ def main(*args):
 
     cb = ChromiumBookmarks(opts.bookmarks_path)
 
-    if opts.print_all:
-        for bookmark in cb:
-            url = URL.from_dict(bookmark)
-            print(url.to_console_str())
-            print("# --------------------")
-    if opts.reorganized_by_date:
-        output = cb.reorganized_by_date()
-        print(output)
+    if opts.print_all or opts.print_json_link_list:
+        if opts.sort_by_date:
+            sorted_bookmarks = sorted(
+                cb,
+                key=lambda x: (
+                    x.get('date_modified', 0)
+                    or x.get('date_added', 0)),
+                reverse=opts.sort_reverse)
+            bookmarks_iter = sorted_bookmarks
+        else:
+            bookmarks_iter = cb
+
+        if opts.print_all:
+            for bookmark in bookmarks_iter:
+                url = URL.from_dict(bookmark)
+                print(url.to_console_str())
+                print("# --------------------")
+
+        elif opts.print_json_link_list:
+            bookmark_urls = [b.get('url') for b in bookmarks_iter
+                             if b.get('name', '').startswith('[XO')]
+            print(json.dumps(bookmark_urls, indent=2))
 
     if opts.overwrite:
         cb.overwrite(prompt=(not opts.skip_prompt))
