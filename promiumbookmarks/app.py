@@ -47,37 +47,55 @@ class BookmarksListHandler(BaseHandler):
         self.write(htmlstr)
 
 
+def format_longdate(longdate):
+    if longdate:
+        return promiumbookmarks.main.longdate_to_datetime(longdate).isoformat() + "Z"
+    return longdate
+
+
+def startswith_data_js(url):
+    if url.startswith('data:') or url.startswith('javascript:'):
+        return True
+    return False
+
+
+import urllib
+
+
+def sanitize_bookmark_url(url):
+    quotechars = [chr(n) for n in xrange(0x0, 0x20)]
+    quotechars += [c for c in """ <>"{}|^`\\"""]
+    quotechars_dict = dict.fromkeys(quotechars)
+
+    def _quote_URI_chars(url):
+        for char in url:
+            if char in quotechars_dict:
+                yield urllib.quote(char)
+            else:
+                yield char
+    return u''.join(_quote_URI_chars(url))
+
+
 class BookmarksTreeHandler(BaseHandler):
     def get(self):
-        cb = promiumbookmarks.main.ChromiumBookmarks('./tests/data/Bookmarks')
+        bookmarks_file = self.settings['bookmarks_file']
+        cb = promiumbookmarks.main.ChromiumBookmarks(bookmarks_file)
         template_name = 'bookmarks_tree_partial.jinja'
         t = promiumbookmarks.main.get_template(template_name)
-        def format_longdate(longdate):
-            if longdate:
-                return promiumbookmarks.main.longdate_to_datetime(longdate).isoformat() + "Z"
-            return longdate
-        def startswith_data_js(url):
-            if url.startswith('data:') or url.startswith('javascript:'):
-                return True
-            return False
-        import urllib
-        def sanitize_bookmark_url(url):
-            quotechars = [chr(n) for n in xrange(0x0, 0x20)]
-            quotechars += [c for c in """ <>"{}|^`\\"""]
-            quotechars_dict = dict.fromkeys(quotechars)
-            def _funcname(url):
-                for char in url:
-                    if char in quotechars_dict:
-                        yield urllib.quote(char)
-                    else:
-                        yield char
-            return ''.join(_funcname(url))
         htmlstr = t.render({
             'bookmarks': cb,
             'bookmarks_iter': iter(cb),
             'format_longdate': format_longdate,
             'startswith_data_js': startswith_data_js,
             'sanitize_bookmark_url': sanitize_bookmark_url})
+        self.write(htmlstr)
+
+
+class BookmarksHandler(BaseHandler):
+    def get(self):
+        template_name = 'bookmarks.jinja'
+        t = promiumbookmarks.main.get_template(template_name)
+        htmlstr = t.render()
         self.write(htmlstr)
 
 
@@ -91,6 +109,9 @@ def make_app(config=None, DEFAULT_COOKIE_SECRET="."):
         "static_path": os.path.join(os.path.dirname(__file__), 'static'),
         "login_url": "/login",
         "xsrf_cookies": True,
+
+        'bookmarks_file': os.path.join(
+            os.path.dirname(__file__), '..', 'tests/data/Bookmarks')
     })
     if config is not None:
         _conf.update(config)
@@ -98,8 +119,9 @@ def make_app(config=None, DEFAULT_COOKIE_SECRET="."):
     application = tornado.web.Application([
         (r"/", MainHandler),
         (r"/login", LoginHandler),
+        (r"/bookmarks", BookmarksHandler),
         (r"/bookmarks/list", BookmarksListHandler),
-        (r"/bookmarks", BookmarksTreeHandler),
+        (r"/bookmarks/dict", BookmarksTreeHandler),
     ], **_conf)
     return application
 
@@ -115,6 +137,10 @@ def main(argv=[__name__]):
     import logging
 
     prs = optparse.OptionParser(usage="%prog : args")
+
+    prs.add_option('-f', '--file',
+                   dest='bookmarks_file',
+                   action='store')
 
     prs.add_option('-H', '--host',
                    dest='host',
@@ -149,8 +175,10 @@ def main(argv=[__name__]):
         import unittest
         return unittest.main()
 
-
-    app = make_app()
+    conf = {}
+    if opts.bookmarks_file:
+        conf['bookmarks_file'] = opts.bookmarks_file
+    app = make_app(conf)
 
     import tornado.httpserver
     try:

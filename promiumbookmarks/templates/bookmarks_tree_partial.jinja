@@ -1,25 +1,23 @@
-
+{#
 <h1>bookmarks_dict</h1>
 <textarea style="width:80%; margin: 0 auto; word-break: break-work;">
 {{ bookmarks.bookmarks_dict }}
 </textarea>
-
-
-<div class="bookmarks_tree"
+#}
+<ul class="bookmarks_tree"
 xmlns:schema="http://schema.org/"
 xmlns:pb="#"
 typeof="pb:BookmarksTree">
-<ul>
 {%- set roots=bookmarks.bookmarks_dict['roots'] %}
 {%- for fldr_key in roots %}
 {%- set fldr_path=[roots[fldr_key]] %}
 {%- set fldr=fldr_path[0] %}
-<li id="#b-{{ fldr['id'] }}" class="folder" typeof="pb:Folder" about="#{{ fldr["id"] }}"
+<li id="b-{{ fldr['id'] }}" class="folder" typeof="pb:Folder" about="#{{ fldr["id"] }}"
   >{{ fldr.type }}: <span property="schema:name">{{ fldr["name"] }}</span>
   <ul class="folder {{ fldr.type }}">
   {%- for node in roots[fldr_key]['children'] recursive %}
     {%- if node['type'] == 'folder' %}
-      <li id="#b-{{ node['id'] }}"
+      <li id="b-{{ node['id'] }}"
           class="folder"
           typeof="pb:Folder"
           about="#{{ node["id"] }}"
@@ -43,14 +41,14 @@ typeof="pb:BookmarksTree">
         {%- endif %}
       </li>
     {%- elif node['type'] == 'url' %}
-      <li id="#b-{{ node.id }}" class="bookmark {{ node.type }}" about="#{{ node["id"] }}" typeof="schema:WebPage pb:URL">
+      <li id="b-{{ node.id }}" class="bookmark {{ node.type }}" about="#{{ node["id"] }}" typeof="schema:WebPage pb:URL">
         <meta property="pb:id" content="{{ node.id }}" datatype="xsd:integer" />
         <meta property="pb:type" content="{{ node.type }}"/>
         <span class="b-name"
-          property="schema:name"><a href="{{ node.url }}" title="{{ node.url }}">{{ node.name }}</a></span>
+          property="schema:name"><a href="{{ node.url }}" title="{{ node.url }}" target="_blank">{{ node.name }}</a></span>
         <span class="b-url"><a
           {%- if not startswith_data_js(node.url) %} property="schema:url" {% endif %}
-          href="{{ sanitize_bookmark_url(node['url']) }}" title="{{ node.name }}">{{ sanitize_bookmark_url(node['url']) }}</a></span>
+          href="{{ sanitize_bookmark_url(node['url']) }}" title="{{ node.name }}" target="_blank">{{ sanitize_bookmark_url(node['url']) }}</a></span>
         <meta property="pb:url" content="{{ node['url'] }}" />
         {%- set dm = format_longdate(node.date_modified) %}
         {%- if dm %}

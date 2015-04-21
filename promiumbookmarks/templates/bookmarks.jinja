@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="utf-8">
+  <title>bookmarks</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.1.0/themes/default-dark/style.min.css" /> -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.1.0/themes/default-dark/style.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.1.0/jstree.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+  <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css"> -->
+  <style>
+    // bootstrap
+    div.container {
+      width: 100% !important;
+    }
+
+    // jstree
+    .jstree-node {
+      margin-left: 8px;
+    }
+    .jstree-search {
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+  </style>
+  <script>
+    "use strict";
+    var main = function() {
+      console.log("<main>");
+      var jst = $('#jstree');
+      jst
+      .on('loaded.jstree', function(e, data) {
+        //jst.jstree('open_all');
+        //console.log('open_all');
+        $("#jstree a").attr('target','_blank');
+      })
+      .on('activate_node.jstree', function(e, data) {
+        if (data.node.li_attr.class !== "folder") {
+          var _url
+          var _objs = $('#' + data.node.id).find('a');
+          var _url = $(_objs[1]).prop("href");
+          window.open(_url, "_blank");
+        }
+      })
+      .jstree({
+        'plugins': ['search', 'checkbox', 'dnd', 'state'],
+        "state": {
+          'key': 'jstree-0'},
+        "checkbox" : {
+          "keep_selected_style" : false
+        },
+        'core' : {
+          'check_callback': true,
+          'data' : {
+            'url' : '/bookmarks/dict',
+            'data' : function (node) {
+              // console.log(node);
+              return {
+                'id' : node.id,
+                'text': node.name,
+              };
+            }
+          }
+        }
+      });
+
+      var search_show_only_matches = false;
+
+      var to = false;
+      $('#inpt_search').bind('keyup', function () {
+        if(to) {
+          clearTimeout(to);
+        }
+        to = setTimeout(function () {
+          var v = $('#inpt_search').val();
+          $(jst).jstree(true).search(v, true, search_show_only_matches);
+        }, 250);
+      });
+
+      $('#btn_open_all').bind('click', function() {
+        jst.jstree('open_all');
+      });
+      $('#btn_close_all').bind('click', function() {
+        jst.jstree('close_all');
+      });
+
+      $('#search_show_only_matches').bind('click', function(e) {
+        var orig_elem = e.target;
+        search_show_only_matches = $(orig_elem).prop('checked');
+        var v = $('#inpt_search').val();
+        $(jst).jstree(true).search(v, true, search_show_only_matches);
+      })
+
+      $('#search_show_only_matches').prop("checked", search_show_only_matches);
+
+      console.log('</main>');
+    };
+    $(main);
+  </script>
+</head>
+<body role="document">
+<div class="container" role="main">
+  <input id="inpt_search"></input>
+  <input id="search_show_only_matches" type="checkbox">show only</input>
+  <button id="btn_open_all">open all</button>
+  <button id="btn_close_all">close all</button>
+  <div id="jstree"></div>
+</div>
+</body>
