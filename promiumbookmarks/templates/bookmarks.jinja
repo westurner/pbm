@@ -28,6 +28,31 @@
   </style>
   <script>
     "use strict";
+
+    var openNewBgTab = function(url) {
+      var openNewBackgroundTab = function(url){
+          var a = document.createElement("a");
+          a.href = url;
+          var evt = document.createEvent("MouseEvents");
+          var ctrl_key = true;
+          var meta_key = true;
+          console.log('initMouseEvent');
+          evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0,
+                                      ctrl_key, false, false, meta_key, 0, null);
+          a.dispatchEvent(evt);
+          window.focus();
+      }
+
+      var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
+      if(!is_chrome) {
+          var win = window.open(url, '_blank');
+          win.blur();
+          window.focus();
+      } else {
+          openNewBackgroundTab(url);
+      }
+    }
+
     var main = function() {
       console.log("<main>");
       var jst = $('#jstree');
@@ -42,7 +67,7 @@
           var _url
           var _objs = $('#' + data.node.id).find('a');
           var _url = $(_objs[1]).prop("href");
-          window.open(_url, "_blank");
+          openNewBgTab(_url);
         }
       })
       .jstree({
