@@ -1,0 +1,9 @@
+<ul class="bookmarks_list" typeof="#BookmarksList">
+{%- for b in bookmarks_iter %}
+<li id="#b-{{ b.id }}" class="bookmark {{ b.type }}" typeof="#Bookmark">
+<meta property="type">{{ b.type }}</meta>
+<span class="b-name" property="name"><a href="{{ b.url }}" title="{{ b.url }}">{{ b.name }}</a></span>
+<span class="b-url" property="name"><a href="{{ b.url }}" title="{{ b.name }}">{{ b.url }}</a></span>
+</li>
+{%- endfor %}
+</ul>

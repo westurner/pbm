@@ -732,6 +732,10 @@ def get_option_parser():
                    dest='print_json_link_list',
                    action='store_true')
 
+    prs.add_option('--print-html',
+                   dest='print_html',
+                   action='store_true')
+
     prs.add_option('-d', '--by-date', '--print-all-by-date',
                    dest='sort_by_date',
                    help='Sort by date_modified or date_added',
@@ -764,6 +768,19 @@ def get_option_parser():
     return prs
 
 
+import jinja2
+def get_template(template='bookmarks_partial.jinja'):
+    env = jinja2.Environment(
+        autoescape=True,)  # ... TODO
+    loader = jinja2.FileSystemLoader(
+        os.path.join(
+            os.path.dirname(
+                os.path.abspath(__file__)),
+            'templates'))
+    tmpl = loader.load(env, template)
+    return tmpl
+
+
 def main(*args):
     import logging
     import sys
@@ -773,7 +790,7 @@ def main(*args):
     args = args and list(args) or sys.argv[1:]
     (opts, args) = prs.parse_args(args)
 
-    #sys.stdout = codecs.getwriter('utf8')(sys.stdout)
+    sys.stdout = codecs.getwriter('utf8')(sys.stdout)
     sys.stderr = codecs.getwriter('utf8')(sys.stderr)
 
     if not opts.quiet:
@@ -803,7 +820,7 @@ def main(*args):
 
     cb = ChromiumBookmarks(opts.bookmarks_path)
 
-    if opts.print_all or opts.print_json_link_list:
+    if opts.print_all or opts.print_json_link_list or opts.print_html:
         if opts.sort_by_date:
             sorted_bookmarks = sorted(
                 cb,
@@ -825,6 +842,17 @@ def main(*args):
             bookmark_urls = [b.get('url') for b in bookmarks_iter
                              if b.get('name', '').startswith('[XO')]
             print(json.dumps(bookmark_urls, indent=2))
+        if opts.print_html_link_list or opts.print_html_tree:
+            if opts.print_html_link_list:
+                template_name = 'bookmarks_list_partial.jinja'
+            elif opts.print_html_tree:
+                template_name = 'bookmarks_tree_partial.jinja'
+
+            t = get_template(template_name)
+            htmlstr = t.render({
+                'bookmarks': cb,
+                'bookmarks_iter': bookmarks_iter})
+            print(htmlstr)
 
     if opts.overwrite:
         cb.overwrite(prompt=(not opts.skip_prompt))

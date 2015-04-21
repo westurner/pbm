@@ -1,0 +1,70 @@
+
+<h1>bookmarks_dict</h1>
+<textarea style="width:80%; margin: 0 auto; word-break: break-work;">
+{{ bookmarks.bookmarks_dict }}
+</textarea>
+
+
+<div class="bookmarks_tree"
+xmlns:schema="http://schema.org/"
+xmlns:pb="#"
+typeof="pb:BookmarksTree">
+<ul>
+{%- set roots=bookmarks.bookmarks_dict['roots'] %}
+{%- for fldr_key in roots %}
+{%- set fldr_path=[roots[fldr_key]] %}
+{%- set fldr=fldr_path[0] %}
+<li id="#b-{{ fldr['id'] }}" class="folder" typeof="pb:Folder" about="#{{ fldr["id"] }}"
+  >{{ fldr.type }}: <span property="schema:name">{{ fldr["name"] }}</span>
+  <ul class="folder {{ fldr.type }}">
+  {%- for node in roots[fldr_key]['children'] recursive %}
+    {%- if node['type'] == 'folder' %}
+      <li id="#b-{{ node['id'] }}"
+          class="folder"
+          typeof="pb:Folder"
+          about="#{{ node["id"] }}"
+          ><span property="schema:name">{{ node["name"] }}</span>
+          <meta property="pb:id" content="{{ node.id }}" datatype="xsd:integer" />
+          <meta property="pb:type" content="{{ node.type }}"/>
+
+        {%- set dm = format_longdate(node.date_modified) %}
+        {%- if dm %}
+        <meta property="schema:modified" content="{{ dm }}" datatype="xsd:dateTime"/>
+        <meta property="pb:date_modified" content="{{ node['date_modified'] }}" datatype="xsd:integer"/>
+        {%- endif %}
+        <meta property="schema:added" content="{{ format_longdate(node.date_added) }}" datatype="xsd:dateTime"/>
+        <meta property="pb:date_added" content="{{ node['date_added'] }}" datatype="xsd:integer"/>
+        <link rel="pb:parent" src="#{{ fldr_path[-1]['id'] }}" />
+        <link rev="pb:children" src="#{{ fldr_path[-1]['id'] }}" />
+        {%- if node['children'] %}
+          {% set _ = fldr_path.append(node) %}
+          <ul class="folder">{{ loop(node['children']) }}</ul>
+          {% set _ = fldr_path.pop() %}
+        {%- endif %}
+      </li>
+    {%- elif node['type'] == 'url' %}
+      <li id="#b-{{ node.id }}" class="bookmark {{ node.type }}" about="#{{ node["id"] }}" typeof="schema:WebPage pb:URL">
+        <meta property="pb:id" content="{{ node.id }}" datatype="xsd:integer" />
+        <meta property="pb:type" content="{{ node.type }}"/>
+        <span class="b-name"
+          property="schema:name"><a href="{{ node.url }}" title="{{ node.url }}">{{ node.name }}</a></span>
+        <span class="b-url"><a
+          {%- if not startswith_data_js(node.url) %} property="schema:url" {% endif %}
+          href="{{ sanitize_bookmark_url(node['url']) }}" title="{{ node.name }}">{{ sanitize_bookmark_url(node['url']) }}</a></span>
+        <meta property="pb:url" content="{{ node['url'] }}" />
+        {%- set dm = format_longdate(node.date_modified) %}
+        {%- if dm %}
+        <meta property="schema:modified" content="{{ dm }}" datatype="xsd:dateTime"/>
+        <meta property="pb:date_modified" content="{{ node['date_modified'] }}" datatype="xsd:integer"/>
+        {%- endif %}
+        <meta property="schema:added" content="{{ format_longdate(node.date_added) }}" datatype="xsd:dateTime"/>
+        <meta property="pb:date_added" content="{{ node['date_added'] }}" datatype="xsd:integer"/>
+        <link rel="pb:parent" src="#{{ fldr_path[-1]['id'] }}" /> <!-- NOTE this is XXX -->
+        <link rev="pb:children" src="#{{ fldr_path[-1]['id'] }}" /> <!-- NOTE this is XXX -->
+      </li>
+    {%- endif %}
+  {%- endfor %}
+  </ul>
+</li>
+{%- endfor %}
+</ul>

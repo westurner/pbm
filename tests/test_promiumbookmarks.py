@@ -142,9 +142,16 @@ class TestPromiumbookmarks(unittest.TestCase):
                 output = main('--print-all')
                 self.assertEqual(output, 0)
 
-            output = main('-v', './tests/data/Bookmarks')
+            TEST_BOOKMARKS = './tests/data/Bookmarks'
+            output = main('-v', TEST_BOOKMARKS)
             self.assertEqual(output, 0)
-            output = main('--print-all', './tests/data/Bookmarks')
+            output = main('--print-all', TEST_BOOKMARKS)
+            self.assertEqual(output, 0)
+            output = main('--print-json-link-list', TEST_BOOKMARKS)
+            self.assertEqual(output, 0)
+            output = main('--print-html-link-list', TEST_BOOKMARKS)
+            self.assertEqual(output, 0)
+            output = main('--print-html-tree', TEST_BOOKMARKS)
             self.assertEqual(output, 0)
         finally:
             sys.argv = __sys_argv
