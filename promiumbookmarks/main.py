@@ -35,6 +35,7 @@ from collections import namedtuple
 try:
     import promiumbookmarks.utils as utils
     import promiumbookmarks.plugins as plugins
+    import promiumbookmarks.app
 except ImportError:
     import plugins
 
@@ -732,8 +733,13 @@ def get_option_parser():
                    dest='print_json_link_list',
                    action='store_true')
 
-    prs.add_option('--print-html',
-                   dest='print_html',
+    prs.add_option('--print-html', '--print-html-tree', '--html',
+                   dest='print_html_tree',
+                   action='store_true')
+
+
+    prs.add_option('--print-html-link-list',
+                   dest='print_html_link_list',
                    action='store_true')
 
     prs.add_option('-d', '--by-date', '--print-all-by-date',
@@ -781,17 +787,21 @@ def get_template(template='bookmarks_partial.jinja'):
     return tmpl
 
 
-def main(*args):
+def main(argv=None,
+         stdout=None,
+         stderr=None):
     import logging
     import sys
     import unittest
 
     prs = get_option_parser()
-    args = args and list(args) or sys.argv[1:]
+    args = argv and list(argv[1:]) or []
     (opts, args) = prs.parse_args(args)
 
-    sys.stdout = codecs.getwriter('utf8')(sys.stdout)
-    sys.stderr = codecs.getwriter('utf8')(sys.stderr)
+    if stdout is None:
+        stdout = codecs.getwriter('utf8')(sys.stdout)
+    if stderr is None:
+        stderr = codecs.getwriter('utf8')(sys.stderr)
 
     if not opts.quiet:
         logging.basicConfig()
@@ -804,14 +814,14 @@ def main(*args):
 
     if opts.list_profile_bookmarks:
         for path in list_profile_bookmarks(opts.list_profile_bookmarks):
-            print(path)
+            print(path, file=stdout)
         return 0
 
     if opts.list_profile_bookmarks_show_backups:
         for path in list_profile_bookmarks(
                 opts.list_profile_bookmarks_show_backups,
                 show_backups=True):
-            print(path)
+            print(path, file=stdout)
         return 0
 
     opts.bookmarks_path = './Bookmarks'
@@ -820,7 +830,9 @@ def main(*args):
 
     cb = ChromiumBookmarks(opts.bookmarks_path)
 
-    if opts.print_all or opts.print_json_link_list or opts.print_html:
+    if (opts.print_all
+            or opts.print_json_link_list
+            or opts.print_html_tree):
         if opts.sort_by_date:
             sorted_bookmarks = sorted(
                 cb,
@@ -835,13 +847,13 @@ def main(*args):
         if opts.print_all:
             for bookmark in bookmarks_iter:
                 url = URL.from_dict(bookmark)
-                print(url.to_console_str())
-                print("# --------------------")
+                print(url.to_console_str(), file=stdout)
+                print("# --------------------", file=stdout)
 
         elif opts.print_json_link_list:
             bookmark_urls = [b.get('url') for b in bookmarks_iter
                              if b.get('name', '').startswith('[XO')]
-            print(json.dumps(bookmark_urls, indent=2))
+            print(json.dumps(bookmark_urls, indent=2), file=stdout)
         if opts.print_html_link_list or opts.print_html_tree:
             if opts.print_html_link_list:
                 template_name = 'bookmarks_list_partial.jinja'
@@ -851,8 +863,10 @@ def main(*args):
             t = get_template(template_name)
             htmlstr = t.render({
                 'bookmarks': cb,
-                'bookmarks_iter': bookmarks_iter})
-            print(htmlstr)
+                'bookmarks_iter': iter(cb),
+                'format_longdate': promiumbookmarks.app.format_longdate,
+                'rdf_uri_escape': promiumbookmarks.app.rdf_uri_escape})
+            print(htmlstr, file=stdout)
 
     if opts.overwrite:
         cb.overwrite(prompt=(not opts.skip_prompt))
@@ -861,4 +875,4 @@ def main(*args):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(argv=sys.argv[1:]))
