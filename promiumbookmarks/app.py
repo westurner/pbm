@@ -45,13 +45,20 @@ class LoginHandler(BaseHandler):
         self.redirect("/")
 
 
-class BookmarksJSONHandler(BaseHandler):
+class BookmarksBaseHandler(BaseHandler):
+
+    def initialize(self, bookmarks_file=None):
+        if bookmarks_file is None:
+            bookmarks_file = self.settings['bookmarks_file']
+            self.cb = self.settings['cb']
+        else:
+            self.cb = promiumbookmarks.main.ChromiumBookmarks(bookmarks_file)
+
+
+class BookmarksJSONHandler(BookmarksBaseHandler):
 
     @tornado.web.authenticated
     def get(self):
-        bookmarks_file = self.settings['bookmarks_file']
-        cb = promiumbookmarks.main.ChromiumBookmarks(bookmarks_file)
-
         indent = self.get_query_argument('indent', None)
         if indent:
             try:
@@ -62,35 +69,30 @@ class BookmarksJSONHandler(BaseHandler):
                 indent = None
 
         if not indent:
-            self.write(cb.bookmarks_dict)
+            self.write(self.cb.bookmarks_dict)
         else:
             self.set_header('content-type', 'text/json')
-            self.write(json.dumps(cb.bookmarks_dict, indent=indent))
+            self.write(json.dumps(self.cb.bookmarks_dict, indent=indent))
 
 
-class BookmarksLinksJSONHandler(BaseHandler):
+class BookmarksLinksJSONHandler(BookmarksBaseHandler):
 
     @tornado.web.authenticated
     def get(self):
-        bookmarks_file = self.settings['bookmarks_file']
-        cb = promiumbookmarks.main.ChromiumBookmarks(bookmarks_file)
-        bookmark_urls = [b.get('url') for b in iter(cb)
-                    if b.get('name', '')]
+        bookmark_urls = [b.get('url') for b in iter(self.cb)]
         self.write(tornado.escape.json_encode(bookmark_urls))
         self.set_header('content-type', 'text/json')
 
 
-class BookmarksListHandler(BaseHandler):
+class BookmarksListHandler(BookmarksBaseHandler):
 
     @tornado.web.authenticated
     def get(self):
-        bookmarks_file = self.settings['bookmarks_file']
-        cb = promiumbookmarks.main.ChromiumBookmarks(bookmarks_file)
         template_name = 'bookmarks_list_partial.jinja'
         t = promiumbookmarks.main.get_template(template_name)
         htmlstr = t.render({
-            'bookmarks': cb,
-            'bookmarks_iter': iter(cb)})
+            'bookmarks': self.cb,
+            'bookmarks_iter': iter(self.cb)})
         self.write(htmlstr)
 
 
@@ -102,6 +104,7 @@ def format_longdate(longdate):
 
 
 import urllib
+
 
 def build_rdf_uri_quotechars_dict():
     quotechars = [chr(n) for n in xrange(0x0, 0x20)]
@@ -123,17 +126,15 @@ def rdf_uri_escape(url):
     return u''.join(_quote_URI_chars(url))
 
 
-class BookmarksTreeHandler(BaseHandler):
+class BookmarksTreeHandler(BookmarksBaseHandler):
 
     @tornado.web.authenticated
     def get(self):
-        bookmarks_file = self.settings['bookmarks_file']
-        cb = promiumbookmarks.main.ChromiumBookmarks(bookmarks_file)
         template_name = 'bookmarks_tree_partial.jinja'
         t = promiumbookmarks.main.get_template(template_name)
         htmlstr = t.render({
-            'bookmarks': cb,
-            'bookmarks_iter': iter(cb),
+            'bookmarks': self.cb,
+            'bookmarks_iter': iter(self.cb),
             'format_longdate': format_longdate,
             'rdf_uri_escape': rdf_uri_escape})
         self.write(htmlstr)
@@ -165,6 +166,9 @@ def make_app(config=None, DEFAULT_COOKIE_SECRET="."):
     })
     if config is not None:
         _conf.update(config)
+
+    _conf['cb'] = promiumbookmarks.main.ChromiumBookmarks(
+        _conf['bookmarks_file'])
 
     application = tornado.web.Application([
         (r"/", MainHandler),
@@ -206,6 +210,14 @@ def main(argv=[__name__]):
                    default='28881',
                    action='store')
 
+    prs.add_option('-r', '--reload', '--autoreload',
+                   dest='autoreload',
+                   action='store_true')
+
+    prs.add_option('-D', '--debug',
+                   dest='debug',
+                   action='store_true')
+
     prs.add_option('-v', '--verbose',
                    dest='verbose',
                    action='store_true',)
@@ -230,16 +242,23 @@ def main(argv=[__name__]):
         import unittest
         return unittest.main()
 
+    n_procs = 0  # one per CPU
     conf = {}
     if opts.bookmarks_file:
         conf['bookmarks_file'] = opts.bookmarks_file
+    if opts.autoreload:
+        conf['autoreload'] = True
+        n_procs = 1
+    if opts.debug:
+        conf['debug'] = True
+        n_procs = 1
     app = make_app(conf)
 
     import tornado.httpserver
     try:
         server = tornado.httpserver.HTTPServer(app)
         server.bind(opts.port)  # TODO: host
-        server.start(0)  # forks one process per cpu
+        server.start(n_procs)  # forks one process per cpu
         tornado.ioloop.IOLoop.current().start()
     except KeyboardInterrupt:
         tornado.ioloop.IOLoop.current().stop()

@@ -21,9 +21,16 @@
       width: 100% !important;
     }
 
+    #jstree a {
+      color: #0000ee !important;
+    }
+    #jstree a:visited {
+      color: #551a8b !important;
+    }
+
     /* jstree */
     .jstree-node {
-      margin-left: 8px;
+      margin-left: 2px;
     }
     .jstree-search {
       font-size: 1.2em;
@@ -32,11 +39,13 @@
 
     #jstree ul {
       border-left: 2px solid #e0e0e0;
+      border-top: 2px solid #e0e0e0;
+      border-bottom: 2px solid #e0e0e0;
     }
 
     /* bookmarks */
     span.bracket {
-      color: #aaa;
+      color: #ddd;
       padding: 2px;
     }
   </style>
@@ -70,9 +79,27 @@
       console.log("<main>");
       var jst = $('#jstree');
 
-      var searchBookmarksTree = function(hash_query) {
+      var updateSearchInputs = function(hash_query) {
         $('#inpt_search').val(hash_query.query);
         $('#search_show_only_matches').prop("checked", hash_query.show_only);
+      };
+
+      var getSearchHash = function() {
+        return ("" + $('#inpt_search').val() + 
+          ($('#search_show_only_matches').prop("checked") ? "!" : ""));
+      };
+
+
+      var ignoreHashChange = false;
+      var updateSearchHash = function() {
+        var _ = ignoreHashChange;
+        ignoreHashChange = true;
+        window.location.hash = getSearchHash();
+        ignoreHashChange = _;
+      };
+
+      var searchBookmarksTree = function(hash_query) {
+        updateSearchInputs(hash_query);
         $(jst).jstree(true).search(hash_query.query, true, hash_query.show_only);
       }
 
@@ -95,7 +122,8 @@
           };
         }
         return false;
-      }
+      };
+
 
       jst
       .on('loaded.jstree', function(e, data) {
@@ -143,8 +171,9 @@
         }
         inpt_search_timeout = setTimeout(function () {
           var v = inpt_search.val();
+          updateSearchHash();
           $(jst).jstree(true).search(v, true, search_show_only_matches);
-        }, 250);
+        }, 1000);
       });
 
       $('#btn_open_all').bind('click', function() {
@@ -158,6 +187,7 @@
         var orig_elem = e.target;
         search_show_only_matches = $(orig_elem).prop('checked');
         var v = $('#inpt_search').val();
+        updateSearchHash();
         $(jst).jstree(true).search(v, true, search_show_only_matches);
       })
 
@@ -167,22 +197,25 @@
         if (e.originalEvent.state !== null) {
           console.log('popstate');
           console.log(e);
-          var hash_query = parseHashQuery(window.location.hash);
+          var hash_query = parseHashQuery('#' + window.location.hash);
           searchBookmarksTree(hash_query);
         }
       });
 
-      $(window).on('hashchange', function(e, data) {
+      window.onhashchange = function(e, data) {
         console.log(e); // e.newURL , e.oldURL
         console.log(data);
         // TODO: if jstree.loaded
-        var hash_query = parseHashQuery(window.location.hash); // e.newURL);
-        if (hash_query != false) {
-          searchBookmarksTree(hash_query);
-        };
-      });
+        if (! ignoreHashChange) {
+          var hash_query = parseHashQuery('#' + window.location.hash); // e.newURL);
+          if (hash_query != false) {
+            searchBookmarksTree(hash_query);
+          };
+        }
+      };
 
-
+      var hash_query = parseHashQuery(window.location.hash);
+      updateSearchInputs(hash_query);
 
       console.log('</main>');
     };
