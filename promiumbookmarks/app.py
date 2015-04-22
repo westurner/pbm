@@ -173,11 +173,11 @@ def make_app(config=None, DEFAULT_COOKIE_SECRET="."):
     application = tornado.web.Application([
         (r"/", MainHandler),
         (r"/login", LoginHandler),
-        (r"/bookmarks", BookmarksHandler),
-        (r"/bookmarks/json", BookmarksJSONHandler),
-        (r"/bookmarks/links.json", BookmarksLinksJSONHandler),
-        (r"/bookmarks/list", BookmarksListHandler),
-        (r"/bookmarks/dict", BookmarksTreeHandler),
+        (r"/bookmarks/chrome", BookmarksHandler),
+        (r"/bookmarks/chrome/json", BookmarksJSONHandler),
+        (r"/bookmarks/chrome/links.json", BookmarksLinksJSONHandler),
+        (r"/bookmarks/chrome/list", BookmarksListHandler),
+        (r"/bookmarks/chrome/tree", BookmarksTreeHandler),
     ], **_conf)
     return application
 

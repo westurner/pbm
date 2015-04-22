@@ -6,10 +6,10 @@
 <body>
 <ul>
 {%- set urls=[
-    '/bookmarks',
-    '/bookmarks/list',
-    '/bookmarks/dict',
-    '/bookmarks/links.json',
+    '/bookmarks/chrome',
+    '/bookmarks/chrome/list',
+    '/bookmarks/chrome/dict',
+    '/bookmarks/chrome/links.json',
 ] %}
 {%- for url in urls %}
 <li><a href="{{ url }}">{{ url }}</a></li>

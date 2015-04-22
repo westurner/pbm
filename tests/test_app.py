@@ -55,18 +55,18 @@ class Test_app(tornado.testing.AsyncHTTPTestCase):
             resp = self.fetch('/')
             self.assertEqual(resp.code, 200)
             self.assertEqual(URLObject(resp.effective_url).path, '/')
-            self.assertIn('<a href="/bookmarks/dict">', resp.body)
+            self.assertIn('<a href="/bookmarks/chrome/dict">', resp.body)
             # raise Exception((resp, dir(resp)))
 
     def test_bookmarks(self):
         with nop_auth():
-            resp = self.fetch('/bookmarks')
+            resp = self.fetch('/bookmarks/chrome')
             self.assertEqual(resp.code, 200)
             self.assertIn('''<div id="jstree">''', resp.body)
 
     def test_bookmarks_json(self):
         with nop_auth():
-            resp = self.fetch('/bookmarks/json')
+            resp = self.fetch('/bookmarks/chrome/json')
             self.assertEqual(resp.code, 200)
             self.assertIn('''bookmark_bar''', resp.body)
             import json
@@ -76,13 +76,13 @@ class Test_app(tornado.testing.AsyncHTTPTestCase):
 
     def test_bookmarks_list(self):
         with nop_auth():
-            resp = self.fetch('/bookmarks/list')
+            resp = self.fetch('/bookmarks/chrome/list')
             self.assertEqual(resp.code, 200)
             self.assertIn('''typeof="#BookmarksList"''', resp.body)
 
     def test_bookmarks_links_json(self):
         with nop_auth():
-            resp = self.fetch('/bookmarks/links.json')
+            resp = self.fetch('/bookmarks/chrome/links.json')
             self.assertEqual(resp.code, 200)
             self.assertIn('''data:text/html, <html style''', resp.body)
             import json
@@ -90,15 +90,15 @@ class Test_app(tornado.testing.AsyncHTTPTestCase):
             self.assertTrue(data)
             self.assertTrue(isinstance(data, list))
 
-    def test_bookmarks_dict(self):
+    def test_bookmarks_tree(self):
         with nop_auth():
-            resp = self.fetch('/bookmarks/dict')
+            resp = self.fetch('/bookmarks/chrome/tree')
             self.assertEqual(resp.code, 200)
             self.assertIn('''typeof="pb:BookmarksTree"''', resp.body)
 
-    def test_bookmarks_dict_rdfa(self):
+    def test_bookmarks_tree_rdfa(self):
         with nop_auth():
-            resp = self.fetch('/bookmarks/dict')
+            resp = self.fetch('/bookmarks/chrome/tree')
             self.assertEqual(resp.code, 200)
             self.assertIn('''typeof="pb:BookmarksTree"''', resp.body)
             import rdflib
