@@ -17,8 +17,7 @@ typeof="pb:BookmarksTree">
 {%- for fldr_key in folder_keys %}
 {%- set fldr_path=['000', roots[fldr_key]] %}
 {%- set fldr=fldr_path[-1] %}
-{%- macro folder_start(fldr, fldr_path) %}
-id="b-{{ fldr['id'] }}"
+{%- macro folder_start(fldr, fldr_path) %}id="b-{{ fldr['id'] }}"
     class="folder"
     typeof="pb:Folder"
     about="#{{ fldr["id"] }}"><span property="schema:name">{{ fldr["name"] }}</span>
@@ -46,9 +45,7 @@ id="b-{{ fldr['id'] }}"
         {%- endif %}
       </li>
     {%- elif node['type'] == 'url' %}
-    <li 
-      {%- macro url_start(node, fldr_path) %}
-      id="b-{{ node.id }}" class="bookmark {{ node.type }}" about="#{{ node["id"] }}" typeof="pb:URL">
+      {%- macro url_start(node, fldr_path) %}id="b-{{ node.id }}" class="bookmark {{ node.type }}" about="#{{ node["id"] }}" typeof="pb:URL">
         <meta property="pb:id" content="{{ node.id }}" datatype="xsd:integer" />
         <meta property="pb:type" content="{{ node.type }}"/>
         <span class="bracket">[</span><span class="b-name"
@@ -67,11 +64,11 @@ id="b-{{ fldr['id'] }}"
         <link rel="pb:parent" src="#{{ fldr_path[-1]['id'] }}" /> <!-- NOTE this is XXX -->
         <link rev="pb:children" src="#{{ fldr_path[-1]['id'] }}" /> <!-- NOTE this is XXX -->
       {%- endmacro %}
-      {{ url_start(node, fldr_path) }}
-      </li>
+     <li {{ url_start(node, fldr_path) }}
+     </li>
     {%- endif %}
   {%- endfor %}
   </ul>
-</li>
+ </li>
 {%- endfor %}
 </ul>
