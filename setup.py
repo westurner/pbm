@@ -35,7 +35,7 @@ setup(
     install_requires=requirements,
     license="BSD",
     zip_safe=False,
-    keywords='pbm chrome chromium bookmarks',
+    keywords='pbm bookmarks chrome chromium',
     classifiers=[
         "Programming Language :: Python :: 2",
         'Development Status :: 4 - Beta',
@@ -59,9 +59,9 @@ setup(
     entry_points="""
     [console_scripts]
     pbm = pbm.main:main
-    pbwebapp = pbm.app:main
+    pbmweb = pbm.app:main
 
-    [promium_plugins]
+    [pbm_plugins]
     null = pbm.plugins.null:NullPlugin
     allinone = pbm.plugins.allinone:AdditionalAllFolderPlugin
     bookmarkletsfolder = pbm.plugins.bookmarkletsfolder:BookmarkletsFolderPlugin
