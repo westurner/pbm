@@ -115,7 +115,7 @@ class TestPromiumbookmarks(unittest.TestCase):
         bookmarks_dict = ChromiumBookmarks.transform_bookmarks_dict(
             bookmarks_path=self.bookmarks_path)
         bookmarks_json = ChromiumBookmarks._to_json(bookmarks_dict)
-        ChromiumBookmarks.overwrite_bookmarks_json(
+        ChromiumBookmarks.organize_bookmarks_json(
             bookmarks_json,
             self.bookmarks_path + '.test51.bak',
             prompt=False)
@@ -197,7 +197,7 @@ class TestPromiumbookmarks(unittest.TestCase):
         output = list(cb)
         self.assertTrue(output)
 
-        output = cb.overwrite(dest=self.bookmarks_path + '.test97.bak',
+        output = cb.organize(dest=self.bookmarks_path + '.test97.bak',
                               prompt=False)
         self.assertTrue(output)
 

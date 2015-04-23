@@ -13,6 +13,7 @@ import tornado.web
 import tornado.ioloop
 
 import promiumbookmarks.main
+import utils
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -30,7 +31,7 @@ class MainHandler(BaseHandler):
 #        name = tornado.escape.xhtml_escape(self.current_user)
 #        self.write("Hello, " + name)
         template_name = 'main.jinja'
-        t = promiumbookmarks.main.get_template(template_name)
+        t = utils.get_template(template_name)
         htmlstr = t.render({'name': self.current_user})
         self.write(htmlstr)
 
@@ -71,7 +72,7 @@ class BookmarksJSONHandler(BookmarksBaseHandler):
         if not indent:
             self.write(self.cb.bookmarks_dict)
         else:
-            self.set_header('content-type', 'text/json')
+            self.set_header('content-type', 'application/json')
             self.write(json.dumps(self.cb.bookmarks_dict, indent=indent))
 
 
@@ -81,7 +82,7 @@ class BookmarksLinksJSONHandler(BookmarksBaseHandler):
     def get(self):
         bookmark_urls = [b.get('url') for b in iter(self.cb)]
         self.write(tornado.escape.json_encode(bookmark_urls))
-        self.set_header('content-type', 'text/json')
+        self.set_header('content-type', 'application/json')
 
 
 class BookmarksListHandler(BookmarksBaseHandler):
@@ -89,7 +90,7 @@ class BookmarksListHandler(BookmarksBaseHandler):
     @tornado.web.authenticated
     def get(self):
         template_name = 'bookmarks_list_partial.jinja'
-        t = promiumbookmarks.main.get_template(template_name)
+        t = utils.get_template(template_name)
         htmlstr = t.render({
             'bookmarks': self.cb,
             'bookmarks_iter': iter(self.cb)})
@@ -131,7 +132,7 @@ class BookmarksTreeHandler(BookmarksBaseHandler):
     @tornado.web.authenticated
     def get(self):
         template_name = 'bookmarks_tree_partial.jinja'
-        t = promiumbookmarks.main.get_template(template_name)
+        t = utils.get_template(template_name)
         htmlstr = t.render({
             'bookmarks': self.cb,
             'bookmarks_iter': iter(self.cb),
@@ -145,7 +146,7 @@ class BookmarksHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
         template_name = 'bookmarks.jinja'
-        t = promiumbookmarks.main.get_template(template_name)
+        t = utils.get_template(template_name)
         htmlstr = t.render()
         self.write(htmlstr)
 
@@ -188,7 +189,13 @@ import unittest
 class Test_promiumbookmarks_app(unittest.TestCase):
 
     def test_promiumbookmarks_app(self):
-        pass
+        app = make_app()
+        self.assertTrue(app)
+        self.assertTrue(hasattr(app, 'settings'))
+        self.assertIn('login_url', app.settings)
+        self.assertIn('xsrf_cookies', app.settings)
+        self.assertIn('bookmarks_file', app.settings)
+        self.assertIn('cb', app.settings)
 
 
 def main(argv=[__name__]):
