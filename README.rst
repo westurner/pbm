@@ -25,7 +25,7 @@ Features
 
 * List Chrome and Chromium Bookmarks JSON files (``-l`` / ``-L``)
 * Print all bookmarks (``--print-all``)
-* Reorganize all bookmarks into the Bookmarks Bar (``--overwrite``)
+* Reorganize all bookmarks into the Bookmarks Bar (``--organize``)
   
 
 Bookmarks Bar Folders
@@ -41,6 +41,9 @@ Bookmarks Bar Folders
 | ``chrome``       | select ``chrome://`` URLs                                   |
 +------------------+-------------------------------------------------------------+
 | ``quicklinks``   | custom quicklinks (optional; copied as-is)                  |
++------------------+-------------------------------------------------------------+
+| ``starred``      | bookmarks ending in one or more ``#`` are copied here       |
+|                  | searchably prefixed with ``[XO]``, ``[XOOOO]``              |
 +------------------+-------------------------------------------------------------+
 | ``queue``        | default folder for new bookmarks                            |
 +------------------+-------------------------------------------------------------+
@@ -74,4 +77,5 @@ Reorganize all bookmarks into Bookmarks Bar folders:
 
 .. code:: bash
 
-   pbm --overwrite ./path/to/Bookmarks  # e.g. a path from -l
+   bmarks=$(pbm -l | grep "Profile 1" | head -n1)
+   pbm --organize "${bmarks}"
