@@ -11,14 +11,14 @@ History
 -------------------
 * ENH: plugins.starred: prefix with X
 * ENH: plugins.starred: O instead of # (searchable)
-* REF: promiumbookmarks.plugins plugin API
+* REF: pbm.plugins plugin API
 * ENH: add "notetab (800px)" bookmarklet
 
 0.3.0 (2015-02-08)
 -------------------
 
-* ENH: Refactor to promiumbookmarks.plugins
-* TST: Move tests to tests/test_promiumbookmarks.py
+* ENH: Refactor to pbm.plugins
+* TST: Move tests to tests/test_pbm.py
 * DOC: README.rst, HISTORY.txt: headings
 
 0.2.5 (2014-12-25)

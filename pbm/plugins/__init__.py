@@ -8,7 +8,7 @@ import inspect
 import logging
 
 
-import promiumbookmarks.utils as utils
+import pbm.utils as utils
 iteritems = utils.iteritems
 
 log = logging.getLogger(__name__)
@@ -73,8 +73,8 @@ class PluginSequence(object):
 
     @classmethod
     def load_module(cls, pluginstr,
-                    default_modprefix='promiumbookmarks.plugins',
-                    default_modname='promiumbookmarks'):
+                    default_modprefix='pbm.plugins',
+                    default_modname='pbm'):
         if '.' not in pluginstr:
             pluginmodstr = '%s.%s' % (default_modprefix, pluginstr)
             modname = default_modname

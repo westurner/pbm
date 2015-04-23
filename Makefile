@@ -39,29 +39,29 @@ clean-test:
 	rm -fr htmlcov/
 
 lint:
-	flake8 promiumbookmarks tests
+	flake8 pbm tests
 
 test:
 	# python setup.py test
 	#$(PROMIUMBOOKMARKS) -t
-	nosetests ./tests/test_promiumbookmarks.py
+	nosetests ./tests/test_pbm.py
 
 nosetest:
-	nosetests --with-coverage ./promiumbookmarks.py
+	nosetests --with-coverage ./pbm.py
 
 test-all:
 	tox
 
 coverage:
-	coverage run --source promiumbookmarks setup.py test
+	coverage run --source pbm setup.py test
 	coverage report -m
 	coverage html
 	open htmlcov/index.html
 
 docs:
-	rm -f docs/promiumbookmarks.rst
+	rm -f docs/pbm.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ promiumbookmarks
+	sphinx-apidoc -o docs/ pbm
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	open docs/_build/html/index.html
@@ -79,7 +79,7 @@ dist: clean
 	python setup.py bdist_wheel
 	ls -l dist
 
-# promiumbookmarks Makefile
+# pbm Makefile
 ##############################################################################
 
 #PROFILE_NAME:="Default"
@@ -88,7 +88,7 @@ CHROMIUM_DIR=$${HOME}/Library/Application\ Support/Google/Chrome
 CHROMIUM_PROFILE=$(CHROMIUM_DIR)/$(PROFILE_NAME)
 CHROMIUM_BOOKMARKS=$(CHROMIUM_PROFILE)/Bookmarks
 
-PROMIUMBOOKMARKS=./promiumbookmarks/main.py
+PROMIUMBOOKMARKS=./pbm/main.py
 
 debug:
 	@echo "---"

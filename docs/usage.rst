@@ -2,6 +2,6 @@
 Usage
 ========
 
-To use promiumbookmarks in a project::
+To use pbm in a project::
 
-    import promiumbookmarks
+    import pbm

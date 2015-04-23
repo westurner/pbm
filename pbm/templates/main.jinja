@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>bookmarks</title>
+</head>
+<body>
+<ul>
+{%- set urls=[
+    '/bookmarks/chrome',
+    '/bookmarks/chrome/list',
+    '/bookmarks/chrome/dict',
+    '/bookmarks/chrome/links.json',
+] %}
+{%- for url in urls %}
+<li><a href="{{ url }}">{{ url }}</a></li>
+{%- endfor %}
+</ul>
+</body>
+</html>

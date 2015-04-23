@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="utf-8">
+  <title>bookmarks</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.1.0/themes/default-dark/style.min.css" /> -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.1.0/themes/default-dark/style.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.1.0/jstree.min.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+  <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css"> -->
+  <style>
+    body {
+      background-color: #f0f0f0;
+    }
+
+    /* bootstrap */
+    div.container {
+      width: 100% !important;
+    }
+
+    #jstree a {
+      color: #0000ee !important;
+    }
+    #jstree a:visited {
+      color: #551a8b !important;
+    }
+
+    /* jstree */
+    .jstree-node {
+      margin-left: 2px;
+    }
+    .jstree-search {
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+
+    #jstree ul {
+      border-left: 2px solid #e0e0e0;
+      border-top: 2px solid #e0e0e0;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    /* bookmarks */
+    span.bracket {
+      color: #ddd;
+      padding: 2px;
+    }
+  </style>
+  <script>
+    "use strict";
+
+    var openNewBgTab = function(url) {
+      var openNewBackgroundTab = function(url){
+          var a = document.createElement("a");
+          a.href = url;
+          var evt = document.createEvent("MouseEvents");
+          var ctrl_key = true;
+          var meta_key = true;
+          console.log('initMouseEvent');
+          evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0,
+                                      ctrl_key, false, false, meta_key, 0, null);
+          a.dispatchEvent(evt);
+          window.focus();
+      }
+      var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
+      if(!is_chrome) {
+          var win = window.open(url, '_blank');
+          win.blur();
+          window.focus();
+      } else {
+          openNewBackgroundTab(url);
+      }
+    }
+
+    var main = function() {
+      console.log("<main>");
+      var jst = $('#jstree');
+
+      var updateSearchInputs = function(hash_query) {
+        $('#inpt_search').val(hash_query.query);
+        $('#search_show_only_matches').prop("checked", hash_query.show_only);
+      };
+
+      var getSearchHash = function() {
+        return ("" + $('#inpt_search').val() + 
+          ($('#search_show_only_matches').prop("checked") ? "!" : ""));
+      };
+
+
+      var ignoreHashChange = false;
+      var updateSearchHash = function() {
+        var _ = ignoreHashChange;
+        ignoreHashChange = true;
+        window.location.hash = getSearchHash();
+        ignoreHashChange = _;
+      };
+
+      var searchBookmarksTree = function(hash_query) {
+        updateSearchInputs(hash_query);
+        $(jst).jstree(true).search(hash_query.query, true, hash_query.show_only);
+      }
+
+      var parseHashQuery = function(loc_hash) {
+        console.log("loc_hash: " + loc_hash);
+        if (loc_hash
+            && (loc_hash.length > 2)
+            && (loc_hash.substr(0,2) === '##')) {
+          var hash_query_str = loc_hash.substr(2);
+          console.log(hash_query_str);
+          var last_char = hash_query_str.substr(hash_query_str.length - 1);
+          var show_only = false;
+          if (last_char === '!') {
+            show_only = true;
+            hash_query_str = hash_query_str.substr(0, hash_query_str.length - 1);
+          }
+          return {
+            'query': hash_query_str,
+            'show_only': show_only
+          };
+        }
+        return false;
+      };
+
+
+      jst
+      .on('loaded.jstree', function(e, data) {
+        //jst.jstree('open_all');
+        $("#jstree a").attr('target','_blank');
+        var hash_query = parseHashQuery(window.location.hash);
+        if (hash_query) {
+          searchBookmarksTree(hash_query);
+        }
+      })
+      .on('activate_node.jstree', function(e, data) {
+        if (data.node.li_attr.class !== "folder") {
+          var _url;
+          var _objs = $('#' + data.node.id).find('a');
+          var _url = $(_objs[1]).prop("href");
+          openNewBgTab(_url);
+        }
+      })
+      .jstree({
+        'plugins': ['search', 'state'],  // 'checkbox', 'dnd'
+        "state": {
+          'key': 'jstree-0'},
+        'core' : {
+          'check_callback': true,
+          'data' : {
+            'url' : '/bookmarks/chrome/tree',
+            'data' : function (node) {
+              // console.log(node);
+              return {
+                'id' : node.id,
+                'text': node.name,
+              };
+            }
+          }
+        }
+      });
+
+      var search_show_only_matches = false;
+
+      var inpt_search = $('#inpt_search');
+      var inpt_search_timeout = false;
+      inpt_search.bind('keyup', function () {
+        if(inpt_search_timeout) {
+          clearTimeout(inpt_search_timeout);
+        }
+        inpt_search_timeout = setTimeout(function () {
+          var v = inpt_search.val();
+          updateSearchHash();
+          $(jst).jstree(true).search(v, true, search_show_only_matches);
+        }, 1000);
+      });
+
+      $('#btn_open_all').bind('click', function() {
+        jst.jstree('open_all');
+      });
+      $('#btn_close_all').bind('click', function() {
+        jst.jstree('close_all');
+      });
+
+      $('#search_show_only_matches').bind('click', function(e) {
+        var orig_elem = e.target;
+        search_show_only_matches = $(orig_elem).prop('checked');
+        var v = $('#inpt_search').val();
+        updateSearchHash();
+        $(jst).jstree(true).search(v, true, search_show_only_matches);
+      })
+
+      $('#search_show_only_matches').prop("checked", search_show_only_matches);
+
+      $(window).on("popstate", function(e) {
+        if (e.originalEvent.state !== null) {
+          console.log('popstate');
+          console.log(e);
+          var hash_query = parseHashQuery('#' + window.location.hash);
+          searchBookmarksTree(hash_query);
+        }
+      });
+
+      window.onhashchange = function(e, data) {
+        console.log(e); // e.newURL , e.oldURL
+        console.log(data);
+        // TODO: if jstree.loaded
+        if (! ignoreHashChange) {
+          var hash_query = parseHashQuery('#' + window.location.hash); // e.newURL);
+          if (hash_query != false) {
+            searchBookmarksTree(hash_query);
+          };
+        }
+      };
+
+      var hash_query = parseHashQuery(window.location.hash);
+      updateSearchInputs(hash_query);
+
+      console.log('</main>');
+    };
+    $(main);
+  </script>
+</head>
+<body role="document">
+<div class="container" role="main">
+  <input id="inpt_search"></input>
+  <input id="search_show_only_matches" type="checkbox">show only</input>
+  <button id="btn_open_all">open all</button>
+  <button id="btn_close_all">close all</button>
+  <div id="jstree"></div>
+</div>
+</body>

@@ -4,7 +4,7 @@ from __future__ import print_function
 
 import logging
 
-import promiumbookmarks.plugins as plugins
+import pbm.plugins as plugins
 
 log = logging.getLogger(__name__)
 

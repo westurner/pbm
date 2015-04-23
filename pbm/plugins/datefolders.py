@@ -2,15 +2,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
-# from promiumbookmarks.promiumbookmarks import PromiumPlugin
+# from pbm.pbm import PromiumPlugin
 
 import collections
 import itertools
 import logging
 import operator
 
-import promiumbookmarks.main as pb
-import promiumbookmarks.plugins as plugins
+import pbm.main as pb
+import pbm.plugins as plugins
 
 log = logging.getLogger(__name__)
 

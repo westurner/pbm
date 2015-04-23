@@ -18,24 +18,24 @@ test_requirements = [
 ]
 
 setup(
-    name='promiumbookmarks',
-    version='0.4.1',
+    name='pbm',
+    version='0.5.0',
     description=(
-        'promiumbookmarks works with Chrome and Chromium bookmarks JSON.'),
+        'pbm works with Chrome and Chromium bookmarks JSON.'),
     long_description=readme + '\n\n' + history,
     author='Wes Turner',
     author_email='wes@wrd.nu',
-    url='https://github.com/westurner/promiumbookmarks',
+    url='https://github.com/westurner/pbm',
     packages=[
-        'promiumbookmarks',
+        'pbm',
     ],
-    package_dir={'promiumbookmarks':
-                 'promiumbookmarks'},
+    package_dir={'pbm':
+                 'pbm'},
     include_package_data=True,
     install_requires=requirements,
     license="BSD",
     zip_safe=False,
-    keywords='promiumbookmarks chrome chromium bookmarks',
+    keywords='pbm bookmarks chrome chromium',
     classifiers=[
         "Programming Language :: Python :: 2",
         'Development Status :: 4 - Beta',
@@ -58,18 +58,19 @@ setup(
     ],
     entry_points="""
     [console_scripts]
-    promiumbookmarks = promiumbookmarks.main:main
+    pbm = pbm.main:main
+    pbmweb = pbm.app:main
 
-    [promium_plugins]
-    null = promiumbookmarks.plugins.null:NullPlugin
-    allinone = promiumbookmarks.plugins.allinone:AdditionalAllFolderPlugin
-    bookmarkletsfolder = promiumbookmarks.plugins.bookmarkletsfolder:BookmarkletsFolderPlugin
-    chromefolder = promiumbookmarks.plugins.chromefolder:ChromeFolderPlugin
-    datefolder = promiumbookmarks.plugins.datefolders:DateFolderPlugin
-    dedupe = promiumbookmarks.plugins.dedupe:DedupePlugin
-    queuefolder = promiumbookmarks.plugins.queuefolder:QueueFolderPlugin
-    quicklinks = promiumbookmarks.plugins.quicklinks:QuicklinksFolderPlugin
-    starred = promiumbookmarks.plugins.starred:StarredFolderPlugin
+    [pbm_plugins]
+    null = pbm.plugins.null:NullPlugin
+    allinone = pbm.plugins.allinone:AdditionalAllFolderPlugin
+    bookmarkletsfolder = pbm.plugins.bookmarkletsfolder:BookmarkletsFolderPlugin
+    chromefolder = pbm.plugins.chromefolder:ChromeFolderPlugin
+    datefolder = pbm.plugins.datefolders:DateFolderPlugin
+    dedupe = pbm.plugins.dedupe:DedupePlugin
+    queuefolder = pbm.plugins.queuefolder:QueueFolderPlugin
+    quicklinks = pbm.plugins.quicklinks:QuicklinksFolderPlugin
+    starred = pbm.plugins.starred:StarredFolderPlugin
     """,
     test_suite='tests',
     tests_require=test_requirements

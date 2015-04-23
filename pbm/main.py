@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 """
-promiumbookmarks -- a tool to read, transform, and write Bookmarks JSON
+pbm -- a tool to read, transform, and write Bookmarks JSON
 
 * Sort all bookmarks into date-based folders in the Bookmarks Bar
 * Add a 'Chrome' folder with links to Bookmarks, History, Extensions, Plugins
@@ -11,9 +11,9 @@ Usage:
 
 .. code:: bash
 
-    promiumbookmarks --print-all ./path/to/Bookmarks
-    promiumbookmarks --by-date ./path/to/Bookmarks
-    promiumbookmarks --overwrite ./path/to/Bookmarks
+    pbm --print-all ./path/to/Bookmarks
+    pbm --by-date ./path/to/Bookmarks
+    pbm --organize ./path/to/Bookmarks
 
 """
 
@@ -33,10 +33,13 @@ from collections import namedtuple
 
 
 try:
-    import promiumbookmarks.utils as utils
-    import promiumbookmarks.plugins as plugins
+    import pbm.utils as utils
+    import pbm.plugins as plugins
+    import pbm.app as app
 except ImportError:
-    import plugins
+    from . import utils
+    from . import plugins
+    from . import app as app
 
 
 DATETIME_CONST = 2**8 * 3**3 * 5**2 * 79 * 853
@@ -87,6 +90,34 @@ class URL(
                 node.get('date_modified'))
         )
 
+    CONSOLE_FIELDS = [
+        'type',
+        'id',
+        'name',
+        'url',
+        'path',
+        'date_added_',
+        'date_modified_'
+    ]
+
+    def _to_console_strs(self):
+        for x in ['id']:
+            yield u'# %-5s: %s' % (x, getattr(self, x))
+        for attrlabel, x in [
+                ('ctime', 'date_added_'),
+                ('mtime', 'date_modified_')]:
+            value = getattr(self, x)
+            if value:
+                yield u'# %-5s: %s' % (attrlabel, value.isoformat())
+        for x in ['path', 'name']:
+            value = getattr(self, x)
+            if value:
+                yield u'# %-5s: %s' % (x, value)
+        yield self.url
+
+    def to_console_str(self):
+        return u'\n'.join(self._to_console_strs())
+
 
 class Folder(
     namedtuple('Folder', (
@@ -136,13 +167,13 @@ class PluginManager(object):
         """
         import pkg_resources
         entry_points = pkg_resources.iter_entry_points(
-            group='promiumbookmarks_plugins')
+            group='pbm_plugins')
         for ep in entry_points:
             yield ep.name, ep.load()
 
     @staticmethod
     def list_plugins():
-        print('installed promiumbookmarks.plugins entry_points\n'
+        print('installed pbm.plugins entry_points\n'
               '-------------------------------------------------')
         _plugins = PluginManager.get_plugins()
         for name, cls in _plugins:
@@ -238,21 +269,22 @@ class ChromiumBookmarks(object):
     def bookmark_bar(self, nodes):
         self.bookmarks_dict['roots']['bookmark_bar']['children'] = nodes
 
-    def add_bookmark_bar_folder(self,
-                        folder_name=None,
-                        folder_nodes=None,
-                        folder=None,
-                        merge_and_update=False,
-                        location=None):
+    def add_bookmark_bar_folder(
+            self,
+            folder_name=None,
+            folder_nodes=None,
+            folder=None,
+            merge_and_update=False,
+            location=None):
         bookmarks_obj = self
         date_added = '13051060469477976'
         default_folder = collections.OrderedDict((
-                ("type", 'folder'),
-                ("id", bookmarks_obj.ids.next()),
-                ("name", folder_name),
-                ("date_added", date_added),
-                ("date_modified", date_added),
-                ("children", folder_nodes or [])
+            ("type", 'folder'),
+            ("id", bookmarks_obj.ids.next()),
+            ("name", folder_name),
+            ("date_added", date_added),
+            ("date_modified", date_added),
+            ("children", folder_nodes or [])
         ))
         if folder is None:
             folder = default_folder
@@ -303,10 +335,21 @@ class ChromiumBookmarks(object):
         self.bookmark_bar = nodes
         return bookmarks_obj
 
-    def merge_folder_nodes(nodes):
-        merged = []
-
     def walkpath(root, node, folder=None, path=None, depth=0):
+        """
+        DFS walk node and leaves, yielding nested Folder and URL objects
+
+        Arguments:
+            node (dict): .type, .name, .children[]
+
+        Keyword Arguments:
+            folder (str or None): current folder key
+            path (list[str]): current traversal path
+            depth (int): current traversal depth
+
+        Yields:
+            {Folder, URL}
+        """
 
         if path is None:
             path = []
@@ -315,7 +358,7 @@ class ChromiumBookmarks(object):
         if node.get('type') == 'folder':
             _path = path + [node]
             _node_children = []
-            for x in _node.get('children',[]):
+            for x in _node.get('children', []):
                 if x.get('type') == 'url':
                     _node_children.append(URL.from_dict(x, path=path))
                 elif x.get('type') == 'folder':
@@ -323,21 +366,28 @@ class ChromiumBookmarks(object):
                     _x_children = []
                     for subnode in x.get('children', []):
                         for recursed in walkpath(
-                            root,
-                            subnode,
-                            folder=x,
-                            path=_path,
-                            depth=depth + 1):
-                            subnodes.append(recursed) # yield recursed
+                                root,
+                                subnode,
+                                folder=x,
+                                path=_path,
+                                depth=depth + 1):
+                            subnodes.append(recursed)  # yield recursed
                     x['children'] = _x_children
                     _node_children.append(Folder.from_dict(x, path=path))
             _node['children'] = _node_children
             yield Folder.from_dict(node)
-
         elif node.get('type') == 'url':
             yield URL.from_dict(node, path=path)
 
     def remove_bookmark_bar_folders(self, folder_name):
+        """
+
+        Arguments:
+            folder_name (str): folder key
+
+        Returns:
+            ChromiumBookmarks: (self)
+        """
         bookmarks_obj = self
         nodes = self.bookmark_bar
         self.folders_before = [
@@ -466,8 +516,6 @@ class ChromiumBookmarks(object):
         """
         Apply a transformation function to Chromium Bookmarks JSON data.
 
-        Args:
-
         Keyword Arguments:
             bookmarks_obj (ChromiumBookmarks): bookmarks_obj ('.bookmarks_dict')
             bookmarks_path (str): path to bookmarks JSON file
@@ -489,11 +537,12 @@ class ChromiumBookmarks(object):
         pluginseq = plugins.PluginSequence(pluginstrs=pluginstrs)
         bookmarks_obj = pluginseq.run(bookmarks_obj)
         assert bookmarks_obj
-        #log.debug(('bookmarks_obj',
+        # log.debug(('bookmarks_obj',
         #           bookmarks_obj,
         #           bookmarks_obj.bookmarks_dict))
 
-        # the 'Other Bookmarks' folder is now empty
+        # the 'Other Bookmarks' folder should be processed
+        # so set it to empty
         bookmarks_dict = bookmarks_obj.bookmarks_dict
         bookmarks_dict['roots']['other']['children'] = []
         return bookmarks_dict
@@ -522,9 +571,9 @@ class ChromiumBookmarks(object):
         return self._to_json(self.bookmarks_dict)
 
     @staticmethod
-    def overwrite_bookmarks_json(data, bookmarks_path, prompt=True):
+    def organize_bookmarks_json(data, bookmarks_path, prompt=True):
         """
-        Overwrite Bookmarks JSON file
+        Overwrite Bookmarks JSON file, prompt by default, and store a backup
 
         Args:
             data (dict): JSON-serializable object(s)
@@ -558,7 +607,7 @@ class ChromiumBookmarks(object):
         os.path.exists(bkp_file) and os.remove(bkp_file)
         return True
 
-    def overwrite(self, dest=None, prompt=True):
+    def organize(self, dest=None, prompt=True):
         """
         Overwrite Bookmarks JSON file
 
@@ -580,7 +629,7 @@ class ChromiumBookmarks(object):
             # bookmarks_path=self.bookmarks_path,
             conf=self.conf)
         bookmarks_json = self._to_json(bookmarks_dict)
-        return self.overwrite_bookmarks_json(
+        return self.organize_bookmarks_json(
             bookmarks_json,
             dest,
             prompt=prompt)
@@ -702,18 +751,37 @@ def get_option_parser():
                    dest='print_all',
                    action='store_true')
 
-    prs.add_option('-d', '--by-date',
-                   dest='reorganized_by_date',
+    prs.add_option('--print-json-link-list',
+                   dest='print_json_link_list',
                    action='store_true')
 
-    prs.add_option('-w', '--overwrite',
-                   dest='overwrite',
+    prs.add_option('--print-html', '--print-html-tree', '--html',
+                   dest='print_html_tree',
+                   action='store_true')
+
+    prs.add_option('--print-html-link-list',
+                   dest='print_html_link_list',
+                   action='store_true')
+
+    prs.add_option('-d', '--by-date', '--print-all-by-date',
+                   dest='sort_by_date',
+                   help='Sort by date_modified or date_added',
+                   action='store_true')
+
+    prs.add_option('-r', '--reverse',
+                   dest='sort_reverse',
+                   help='Reverse the sort order',
                    action='store_true',
-                   help="Overwrite Bookmarks in place and rm Bookmarks.bak")
+                   default=False)
+
+    prs.add_option('-w', '--organize', '--overwrite',
+                   dest='organize',
+                   action='store_true',
+                   help="Organize Bookmarks")
     prs.add_option('--skip-prompt',
                    dest='skip_prompt',
                    action='store_true',
-                   help="Skip overwrite prompt")
+                   help="Skip organize prompt")
 
     prs.add_option('-v', '--verbose',
                    dest='verbose',
@@ -727,17 +795,21 @@ def get_option_parser():
     return prs
 
 
-def main(*args):
+def main(argv=None,
+         stdout=None,
+         stderr=None):
     import logging
     import sys
     import unittest
 
     prs = get_option_parser()
-    args = args and list(args) or sys.argv[1:]
+    args = argv and list(argv) or sys.argv[1:]
     (opts, args) = prs.parse_args(args)
 
-    sys.stdout = codecs.getwriter('utf8')(sys.stdout)
-    sys.stderr = codecs.getwriter('utf8')(sys.stderr)
+    if stdout is None:
+        stdout = codecs.getwriter('utf8')(sys.stdout)
+    if stderr is None:
+        stderr = codecs.getwriter('utf8')(sys.stderr)
 
     if not opts.quiet:
         logging.basicConfig()
@@ -750,14 +822,14 @@ def main(*args):
 
     if opts.list_profile_bookmarks:
         for path in list_profile_bookmarks(opts.list_profile_bookmarks):
-            print(path)
+            print(path, file=stdout)
         return 0
 
     if opts.list_profile_bookmarks_show_backups:
         for path in list_profile_bookmarks(
                 opts.list_profile_bookmarks_show_backups,
                 show_backups=True):
-            print(path)
+            print(path, file=stdout)
         return 0
 
     opts.bookmarks_path = './Bookmarks'
@@ -766,18 +838,49 @@ def main(*args):
 
     cb = ChromiumBookmarks(opts.bookmarks_path)
 
-    if opts.print_all:
-        for bookmark in cb:
-            print(bookmark)
-    if opts.reorganized_by_date:
-        output = cb.reorganized_by_date()
-        print(output)
+    if (opts.print_all
+            or opts.print_json_link_list
+            or opts.print_html_tree):
+        if opts.sort_by_date:
+            sorted_bookmarks = sorted(
+                cb,
+                key=lambda x: (
+                    x.get('date_modified', 0)
+                    or x.get('date_added', 0)),
+                reverse=opts.sort_reverse)
+            bookmarks_iter = sorted_bookmarks
+        else:
+            bookmarks_iter = cb
 
-    if opts.overwrite:
-        cb.overwrite(prompt=(not opts.skip_prompt))
+        if opts.print_all:
+            for bookmark in bookmarks_iter:
+                url = URL.from_dict(bookmark)
+                print(url.to_console_str(), file=stdout)
+                print("# --------------------", file=stdout)
+
+        elif opts.print_json_link_list:
+            bookmark_urls = [b.get('url') for b in bookmarks_iter
+                             if b.get('name', '').startswith('[XO')]
+            print(json.dumps(bookmark_urls, indent=2), file=stdout)
+        if opts.print_html_link_list or opts.print_html_tree:
+            if opts.print_html_link_list:
+                template_name = 'bookmarks_list_partial.jinja'
+            elif opts.print_html_tree:
+                template_name = 'bookmarks_tree_partial.jinja'
+
+            t = utils.get_template(template_name)
+            htmlstr = t.render({
+                'bookmarks': cb,
+                'bookmarks_iter': iter(cb),
+                'format_longdate': app.format_longdate,
+                'rdf_uri_escape': app.rdf_uri_escape})
+            print(htmlstr, file=stdout)
+
+    if opts.organize:
+        cb.organize(prompt=(not opts.skip_prompt))
 
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(argv=sys.argv[1:]))
