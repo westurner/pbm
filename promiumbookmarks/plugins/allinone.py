@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
-import promiumbookmarks.plugins as plugins
+import pbm.plugins as plugins
 
 import logging
 log = logging.getLogger(__name__)

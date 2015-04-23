@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 """
-promiumbookmarks_app
+pbm_app
 """
 
 import json
@@ -12,7 +12,7 @@ import tornado
 import tornado.web
 import tornado.ioloop
 
-import promiumbookmarks.main
+import pbm.main
 import utils
 
 
@@ -53,7 +53,7 @@ class BookmarksBaseHandler(BaseHandler):
             bookmarks_file = self.settings['bookmarks_file']
             self.cb = self.settings['cb']
         else:
-            self.cb = promiumbookmarks.main.ChromiumBookmarks(bookmarks_file)
+            self.cb = pbm.main.ChromiumBookmarks(bookmarks_file)
 
 
 class BookmarksJSONHandler(BookmarksBaseHandler):
@@ -99,7 +99,7 @@ class BookmarksListHandler(BookmarksBaseHandler):
 
 def format_longdate(longdate):
     if longdate:
-        return promiumbookmarks.main.longdate_to_datetime(
+        return pbm.main.longdate_to_datetime(
             longdate).isoformat() + "Z"
     return longdate
 
@@ -168,7 +168,7 @@ def make_app(config=None, DEFAULT_COOKIE_SECRET="."):
     if config is not None:
         _conf.update(config)
 
-    _conf['cb'] = promiumbookmarks.main.ChromiumBookmarks(
+    _conf['cb'] = pbm.main.ChromiumBookmarks(
         _conf['bookmarks_file'])
 
     application = tornado.web.Application([
@@ -186,9 +186,9 @@ def make_app(config=None, DEFAULT_COOKIE_SECRET="."):
 import unittest
 
 
-class Test_promiumbookmarks_app(unittest.TestCase):
+class Test_pbm_app(unittest.TestCase):
 
-    def test_promiumbookmarks_app(self):
+    def test_pbm_app(self):
         app = make_app()
         self.assertTrue(app)
         self.assertTrue(hasattr(app, 'settings'))

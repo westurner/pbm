@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 
 """
-test_promiumbookmarks
+test_pbm
 ----------------------------------
 
-Tests for `promiumbookmarks` module.
+Tests for `pbm` module.
 """
 
 import unittest
 
-import promiumbookmarks
-import promiumbookmarks.main as pb
+import pbm
+import pbm.main as pb
 
 import collections
 import itertools
@@ -20,7 +20,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
-promiumbookmarks
+pbm
 
 class TestPromiumbookmarks(unittest.TestCase):
 
@@ -34,15 +34,15 @@ class TestPromiumbookmarks(unittest.TestCase):
         pass
 
     def test_00_imports(self):
-        import promiumbookmarks.main as pb
+        import pbm.main as pb
         self.assertTrue(pb)
-        import promiumbookmarks.plugins as plugins
+        import pbm.plugins as plugins
         self.assertTrue(plugins)
-        import promiumbookmarks.plugins.datefolders as dbf
+        import pbm.plugins.datefolders as dbf
         self.assertTrue(dbf)
 
     def test_01_list_bookmarks(self):
-        from promiumbookmarks.main import list_profile_bookmarks
+        from pbm.main import list_profile_bookmarks
         output = list_profile_bookmarks()
         self.assertTrue(hasattr(output, '__iter__'))
         output = list(output)
@@ -53,12 +53,12 @@ class TestPromiumbookmarks(unittest.TestCase):
         self.assertTrue(len(output))
 
     def test_11_read_bookmarks(self):
-        from promiumbookmarks.main import ChromiumBookmarks
+        from pbm.main import ChromiumBookmarks
         bookmarks = ChromiumBookmarks.read_bookmarks(self.bookmarks_path)
         self.assertTrue(bookmarks)
 
     def a_test_21_print_bookmarks(self):
-        from promiumbookmarks.main import ChromiumBookmarks
+        from pbm.main import ChromiumBookmarks
         bookmarks = ChromiumBookmarks.read_bookmarks(self.bookmarks_path)
         output = ChromiumBookmarks.print_bookmarks(bookmarks)
         self.assertTrue(output)
@@ -73,12 +73,12 @@ class TestPromiumbookmarks(unittest.TestCase):
         #self.assertFalse(duplicates)
 
     def test_30_check_bookmarks_list_ids(self):
-        import promiumbookmarks.main as pb
+        import pbm.main as pb
         bookmarks_obj = pb.ChromiumBookmarks(bookmarks_path=self.bookmarks_path)
         self.check_bookmarks_list(bookmarks_obj.bookmarks_list)
 
     def test_31_walk_bookmarks(self):
-        from promiumbookmarks.main import ChromiumBookmarks
+        from pbm.main import ChromiumBookmarks
         bookmarks = ChromiumBookmarks.read_bookmarks(self.bookmarks_path)
         self.assertTrue(bookmarks)
         bookmarks = itertools.chain(
@@ -89,18 +89,18 @@ class TestPromiumbookmarks(unittest.TestCase):
         self.check_bookmarks_list(bookmarks)
 
     def test_33_iter_bookmarks(self):
-        from promiumbookmarks.main import ChromiumBookmarks
+        from pbm.main import ChromiumBookmarks
         bookmarks = list(ChromiumBookmarks.iter_bookmarks(self.bookmarks_path))
         self.assertTrue(bookmarks)
 
     def test_41_reorganize_by_date(self):
-        from promiumbookmarks.main import ChromiumBookmarks
+        from pbm.main import ChromiumBookmarks
         bookmarks_obj = ChromiumBookmarks(bookmarks_path=self.bookmarks_path)
         self.assertTrue(bookmarks_obj)
         log.debug(self.bookmarks_path)
         bookmarks_list = bookmarks_obj.bookmarks_list
         self.assertTrue(bookmarks_list)
-        import promiumbookmarks.plugins.datefolders as dbf
+        import pbm.plugins.datefolders as dbf
         bookmarks_list = dbf.DateBasedFoldersPlugin.reorganize_by_date(bookmarks_obj)
         self.assertTrue(bookmarks_list)
         bookmarks_obj.bookmarks_dict['roots']['bookmark_bar']['children'] = (
@@ -111,7 +111,7 @@ class TestPromiumbookmarks(unittest.TestCase):
         self.assertTrue(json_output)
 
     def test_51_rewrite_bookmarks(self):
-        from promiumbookmarks.main import ChromiumBookmarks
+        from pbm.main import ChromiumBookmarks
         bookmarks_dict = ChromiumBookmarks.transform_bookmarks_dict(
             bookmarks_path=self.bookmarks_path)
         bookmarks_json = ChromiumBookmarks._to_json(bookmarks_dict)
@@ -123,12 +123,12 @@ class TestPromiumbookmarks(unittest.TestCase):
         self.assertTrue(json.loads(output_json), bookmarks_dict)
 
     def test_60_get_option_parser(self):
-        from promiumbookmarks.main import get_option_parser
+        from pbm.main import get_option_parser
         prs = get_option_parser()
         self.assertTrue(prs)
 
     def test_61_main(self):
-        from promiumbookmarks.main import main
+        from pbm.main import main
         import sys
         __sys_argv = sys.argv
         sys.argv = [__file__]
@@ -157,18 +157,18 @@ class TestPromiumbookmarks(unittest.TestCase):
             sys.argv = __sys_argv
 
     def test_81_plugins(self):
-        import promiumbookmarks.plugins.null
-        import promiumbookmarks.plugins.dedupe
-        import promiumbookmarks.plugins.bookmarkletsfolder
-        import promiumbookmarks.plugins.chromefolder
-        import promiumbookmarks.plugins.datefolders
-        import promiumbookmarks.plugins.quicklinks
-        import promiumbookmarks.plugins.allinone
-        import promiumbookmarks.plugins.starred
-        import promiumbookmarks.plugins.queuefolder
+        import pbm.plugins.null
+        import pbm.plugins.dedupe
+        import pbm.plugins.bookmarkletsfolder
+        import pbm.plugins.chromefolder
+        import pbm.plugins.datefolders
+        import pbm.plugins.quicklinks
+        import pbm.plugins.allinone
+        import pbm.plugins.starred
+        import pbm.plugins.queuefolder
 
     def test_82_plugins_strlist(self):
-        import promiumbookmarks.plugins as plugins
+        import pbm.plugins as plugins
         DEFAULT_PLUGINS = [
             'null',
             'dedupe',
@@ -191,8 +191,8 @@ class TestPromiumbookmarks(unittest.TestCase):
         _plugins = plugins.PluginSequence.load_plugins()
         self.assertTrue(_plugins)
 
-    def test_97_promiumbookmarks(self):
-        from promiumbookmarks.main import ChromiumBookmarks
+    def test_97_pbm(self):
+        from pbm.main import ChromiumBookmarks
         cb = ChromiumBookmarks(self.bookmarks_path)
         output = list(cb)
         self.assertTrue(output)
@@ -203,21 +203,21 @@ class TestPromiumbookmarks(unittest.TestCase):
 
 #   class Test0PluginManager(unittest.TestCase):
 #       def test_00_get_plugins(self):
-#           from promiumbookmarks.main import PluginManager
+#           from pbm.main import PluginManager
 #           output = PluginManager.get_plugins()
 #           self.assertTrue(output)
 #           x = list(output)
 #           self.assertTrue(x)
 #
 #       def test_00_list_plugins(self):
-#           from promiumbookmarks.main import PluginManager
+#           from pbm.main import PluginManager
 #           output = PluginManager.list_plugins()
 #           self.assertTrue(output)
 #           x = list(output)
 #           self.assertTrue(x)
 
 import os
-import promiumbookmarks.plugins as plugins
+import pbm.plugins as plugins
 
 class PluginTestCase(unittest.TestCase):
 

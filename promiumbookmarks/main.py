@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 """
-promiumbookmarks -- a tool to read, transform, and write Bookmarks JSON
+pbm -- a tool to read, transform, and write Bookmarks JSON
 
 * Sort all bookmarks into date-based folders in the Bookmarks Bar
 * Add a 'Chrome' folder with links to Bookmarks, History, Extensions, Plugins
@@ -11,9 +11,9 @@ Usage:
 
 .. code:: bash
 
-    promiumbookmarks --print-all ./path/to/Bookmarks
-    promiumbookmarks --by-date ./path/to/Bookmarks
-    promiumbookmarks --organize ./path/to/Bookmarks
+    pbm --print-all ./path/to/Bookmarks
+    pbm --by-date ./path/to/Bookmarks
+    pbm --organize ./path/to/Bookmarks
 
 """
 
@@ -33,9 +33,9 @@ from collections import namedtuple
 
 
 try:
-    import promiumbookmarks.utils as utils
-    import promiumbookmarks.plugins as plugins
-    import promiumbookmarks.app as app
+    import pbm.utils as utils
+    import pbm.plugins as plugins
+    import pbm.app as app
 except ImportError:
     from . import utils
     from . import plugins
@@ -167,13 +167,13 @@ class PluginManager(object):
         """
         import pkg_resources
         entry_points = pkg_resources.iter_entry_points(
-            group='promiumbookmarks_plugins')
+            group='pbm_plugins')
         for ep in entry_points:
             yield ep.name, ep.load()
 
     @staticmethod
     def list_plugins():
-        print('installed promiumbookmarks.plugins entry_points\n'
+        print('installed pbm.plugins entry_points\n'
               '-------------------------------------------------')
         _plugins = PluginManager.get_plugins()
         for name, cls in _plugins:

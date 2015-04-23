@@ -6,7 +6,7 @@ import collections
 import logging
 import re
 
-import promiumbookmarks.plugins as plugins
+import pbm.plugins as plugins
 
 # TODO: Folder, URL, bookmarks_bar structure
 

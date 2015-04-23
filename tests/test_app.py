@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 """
-test_app.py -- test promiumbookmarks.app tornado application
+test_app.py -- test pbm.app tornado application
 """
 
 from contextlib import contextmanager
@@ -10,8 +10,8 @@ from contextlib import contextmanager
 import tornado.testing
 from urlobject import URLObject
 
-from promiumbookmarks.app import make_app
-from promiumbookmarks.app import BaseHandler
+from pbm.app import make_app
+from pbm.app import BaseHandler
 
 
 @contextmanager

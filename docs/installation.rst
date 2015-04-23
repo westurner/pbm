@@ -4,9 +4,9 @@ Installation
 
 At the command line::
 
-    $ easy_install promiumbookmarks
+    $ easy_install pbm
 
 Or, if you have virtualenvwrapper installed::
 
-    $ mkvirtualenv promiumbookmarks
-    $ pip install promiumbookmarks
+    $ mkvirtualenv pbm
+    $ pip install pbm

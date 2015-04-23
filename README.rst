@@ -1,24 +1,24 @@
 ===============================
-promiumbookmarks
+pbm
 ===============================
 
-.. image:: https://badge.fury.io/py/promiumbookmarks.png
-    :target: http://badge.fury.io/py/promiumbookmarks
+.. image:: https://badge.fury.io/py/pbm.png
+    :target: http://badge.fury.io/py/pbm
 
-.. .. image:: https://travis-ci.org/westurner/promiumbookmarks.png?branch=master
-..        :target: https://travis-ci.org/westurner/promiumbookmarks
+.. .. image:: https://travis-ci.org/westurner/pbm.png?branch=master
+..        :target: https://travis-ci.org/westurner/pbm
 
-.. image:: https://pypip.in/d/promiumbookmarks/badge.png
-        :target: https://pypi.python.org/pypi/promiumbookmarks
+.. image:: https://pypip.in/d/pbm/badge.png
+        :target: https://pypi.python.org/pypi/pbm
 
 
-promiumbookmarks works with Chrome and Chromium bookmarks JSON.
+pbm works with Chrome and Chromium bookmarks JSON.
 
 * Free software: BSD license
-* Source: https://github.com/westurner/promiumbookmarks
-* PyPI: https://pypi.python.org/pypi/promiumbookmarks
+* Source: https://github.com/westurner/pbm
+* PyPI: https://pypi.python.org/pypi/pbm
 
-.. * Documentation: https://promiumbookmarks.readthedocs.org.
+.. * Documentation: https://pbm.readthedocs.org.
 
 Features
 ========
@@ -52,13 +52,13 @@ Install from PyPI with pip:
 
 .. code:: bash
 
-   pip install promiumbookmarks
+   pip install pbm
 
 Development:
 
 .. code:: bash
 
-   pip install -e git+ssh://git@github.com/westurner/promiumbookmarks#egg=promiumbookmarks
+   pip install -e git+ssh://git@github.com/westurner/pbm#egg=pbm
 
 
 Usage
@@ -68,10 +68,10 @@ directories:
 
 .. code:: bash
 
-   promiumbookmarks -l  # or -L to also list Bookmarks.%FT%T%z.bkp backups
+   pbm -l  # or -L to also list Bookmarks.%FT%T%z.bkp backups
 
 Reorganize all bookmarks into Bookmarks Bar folders:
 
 .. code:: bash
 
-   promiumbookmarks --overwrite ./path/to/Bookmarks  # e.g. a path from -l
+   pbm --overwrite ./path/to/Bookmarks  # e.g. a path from -l
