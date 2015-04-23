@@ -35,9 +35,10 @@ from collections import namedtuple
 try:
     import promiumbookmarks.utils as utils
     import promiumbookmarks.plugins as plugins
-    import promiumbookmarks.app
+    import pbapp as pbapp
 except ImportError:
     import plugins
+    import app as pbapp
 
 
 DATETIME_CONST = 2**8 * 3**3 * 5**2 * 79 * 853
@@ -795,7 +796,7 @@ def main(argv=None,
     import unittest
 
     prs = get_option_parser()
-    args = argv and list(argv[1:]) or []
+    args = argv and list(argv) or sys.argv[1:]
     (opts, args) = prs.parse_args(args)
 
     if stdout is None:
@@ -864,8 +865,8 @@ def main(argv=None,
             htmlstr = t.render({
                 'bookmarks': cb,
                 'bookmarks_iter': iter(cb),
-                'format_longdate': promiumbookmarks.app.format_longdate,
-                'rdf_uri_escape': promiumbookmarks.app.rdf_uri_escape})
+                'format_longdate': pbapp.format_longdate,
+                'rdf_uri_escape': pbapp.rdf_uri_escape})
             print(htmlstr, file=stdout)
 
     if opts.overwrite:
