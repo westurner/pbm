@@ -59,6 +59,7 @@ setup(
     entry_points="""
     [console_scripts]
     promiumbookmarks = promiumbookmarks.main:main
+    pbwebapp = promiumbookmarks.app:main
 
     [promium_plugins]
     null = promiumbookmarks.plugins.null:NullPlugin
