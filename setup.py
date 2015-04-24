@@ -22,7 +22,7 @@ test_requirements = [
 
 setup(
     name='pbm',
-    version='0.5.2',
+    version='0.5.3',
     description=(
         'pbm works with Chrome and Chromium bookmarks JSON.'),
     long_description=readme + '\n\n' + history,
