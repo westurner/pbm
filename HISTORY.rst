@@ -3,6 +3,36 @@
 History
 =======
 
+0.5.1 (2015-04-23)
+-------------------
+* BUG: main.py: don't call .get_ids() (queue folder id to max)
+* BUG: \*: Fix id renumbering (Note: This is still relatively unsolved)
+* BUG: utils.py: generate longdates
+* TST: tests/test_pbm.py: test that queue['id'] is the max
+* REF: \*: regular imports
+* RLS: HISTORY.txt: v0.5.0, v0.5.1
+
+0.5.0 (2015-04-23)
+-------------------
+* BUG: main.py: encoding errors when piping to e.g. cat (default: UTF-8)
+* ENH: main.py: ``--print-json-link-list``
+* ENH: main.py: ``--print-html-tree``
+* ENH: main.py: ``--print-all``
+* ENH: app.py: tornado app w/ stub login auth, csrf, secure cookies
+* ENH: templates/bookmarks_list.jinja: HTML: ``/bookmarks/chrome/list``
+* ENH: app.py: ``/bookmarks/chrome/json`` JSON (``~ cat ./Bookmarks``)
+* ENH: templates/bookmarks.jinja: JS: ``/bookmarks/chrome`` jstree
+* ENH: templates/bookmarks.jinja: JS: #searchterm! onhashchanged
+* ENH: templates/bookmarks.jinja: CSS: Bootstrap
+* ENH: templates/bookmarks.jinja: CSS: show a:visited
+* ENH: templates/bookmarks.jinja: CSS: [markdown](url://formatting)
+* ENH: templates/bookmarks_tree.jinja: HTML+RDFa: ``/bookmarks/chrome/tree`` recursive RDFa template
+* REF: utils.get_template, imports
+* TST,REF: main function signature, explicit stdout, q
+* TST: tests/data: current output
+* TST: tests/test_app.py: tornado.testing.AsyncHTTPTestCase
+* REF: -> pbm
+
 0.4.1 (2015-03-02)
 -------------------
 * BLD: Makefile, MANIFEST.in: rm .ropeproject, exclude.bak

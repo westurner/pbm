@@ -5,16 +5,19 @@ from __future__ import print_function
 # from pbm.pbm import PromiumPlugin
 
 import collections
+import datetime
 import itertools
 import logging
-import operator
 
-import pbm.main as pb
-import pbm.plugins as plugins
+import pbm.main
+import pbm.plugins
+import pbm.utils
 
 log = logging.getLogger(__name__)
 
-class DateBasedFoldersPlugin(plugins.PromiumPlugin):
+
+class DateBasedFoldersPlugin(pbm.plugins.PromiumPlugin):
+
     """
     Organize bookmarks into year, year-month, year-month-day date-based folders
 
@@ -28,7 +31,8 @@ class DateBasedFoldersPlugin(plugins.PromiumPlugin):
     """
 
     def process_bookmarks(self, bookmarks_obj):
-        #log.debug(('dbmarksobj', bookmarks_obj.bookmarks_dict, bookmarks_obj.bookmarks_list))
+        # log.debug(('dbmarksobj',
+        #  bookmarks_obj.bookmarks_dict, bookmarks_obj.bookmarks_list))
         datefolder_nodes = self.reorganize_by_date(bookmarks_obj)
         bookmark_bar = (
             bookmarks_obj.bookmarks_dict['roots']['bookmark_bar']['children'])
@@ -46,8 +50,8 @@ class DateBasedFoldersPlugin(plugins.PromiumPlugin):
                 else:
                     n = prev_n + 1 if prev_n else 0
                     bookmark_bar.insert(n, node)
-            #log.debug(('DATEFOLDER node', n, node))
-        #log.debug(('datefolder_nodes', datefolder_nodes))
+            # log.debug(('DATEFOLDER node', n, node))
+        # log.debug(('datefolder_nodes', datefolder_nodes))
         return bookmarks_obj
 
     @staticmethod
@@ -71,16 +75,17 @@ class DateBasedFoldersPlugin(plugins.PromiumPlugin):
         """
         # by default: include all items
         if filterfunc is True:
-            filterfunc = lambda x: True
+            def filterfunc(x):
+                True
         elif filterfunc is None:
-            filterfunc = pb.ChromiumBookmarks.chrome_filterfunc
+            filterfunc = pbm.main.ChromiumBookmarks.chrome_filterfunc
 
-        #id_max = max(int(b.get('id')) for b in bookmarks)
-        #ids = itertools.count(id_max + 1)
+        # id_max = max(int(b.get('id')) for b in bookmarks)
+        # ids = itertools.count(id_max + 1)
         ids = bookmarks_obj.ids
 
         bookmarks_iter_filtered = (
-            pb.URL.from_dict(b) for b in
+            pbm.main.URL.from_dict(b) for b in
             bookmarks_obj.bookmarks_list
             if filterfunc(b))
 
@@ -100,7 +105,6 @@ class DateBasedFoldersPlugin(plugins.PromiumPlugin):
             bookmarks_list,
             lambda x: longdate_ymd_key(x))
 
-
         bookmarks_by_day = [(x, list(iterable))
                             for (x, iterable) in bookmarks_by_day]
 
@@ -119,31 +123,37 @@ class DateBasedFoldersPlugin(plugins.PromiumPlugin):
 
         nodes = []
         for year, by_year in bookmarks_by_day_month_year:
+            _date = pbm.utils.datetime_to_longdate(
+                datetime.datetime(int(year), 1, 1))
             year_folder = {
                 "type": "folder",
                 "id": ids.next(),
                 "name": str(year),
                 "children": [],
-                "date_added": "13053368494256041",
-                "date_modified": "0",
+                "date_added": _date,
+                "date_modified": _date,
             }
             for month, by_day in by_year:
+                _date = pbm.utils.datetime_to_longdate(
+                    datetime.datetime(int(year), int(month[-1]), 1))
                 month_folder = {
                     "type": "folder",
                     "id": ids.next(),
                     "name": '-'.join(str(s) for s in month),
                     "children": [],
-                    "date_added": "13053368494256041",
-                    "date_modified": "0",
+                    "date_added": _date,
+                    "date_modified": _date,
                 }
                 for day, iterable in by_day:
+                    _date = pbm.utils.datetime_to_longdate(
+                        datetime.datetime(int(year), int(month[-1]), int(day[-1])))
                     day_folder = {
                         "type": "folder",
                         "id": ids.next(),
                         "name": '-'.join(str(s) for s in day),
                         "children": [],
-                        "date_added": "13053368494256041",
-                        "date_modified": "0",
+                        "date_added": _date,
+                        "date_modified": _date,
                     }
                     for b in iterable:
                         if b.type == 'url':

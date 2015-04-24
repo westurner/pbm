@@ -99,8 +99,7 @@ class BookmarksListHandler(BookmarksBaseHandler):
 
 def format_longdate(longdate):
     if longdate:
-        return pbm.main.longdate_to_datetime(
-            longdate).isoformat() + "Z"
+        return pbm.utils.longdate_to_datetime(longdate).isoformat() + "Z"
     return longdate
 
 
@@ -192,6 +191,16 @@ class Test_pbm_app(unittest.TestCase):
         app = make_app()
         self.assertTrue(app)
         self.assertTrue(hasattr(app, 'settings'))
+        self.assertIn('login_url', app.settings)
+        self.assertIn('xsrf_cookies', app.settings)
+        self.assertIn('bookmarks_file', app.settings)
+        self.assertIn('cb', app.settings)
+
+    def test_pbm_app_conf(self):
+        app = make_app({'test': 'test'})
+        self.assertTrue(app)
+        self.assertTrue(hasattr(app, 'settings'))
+        self.assertIn('test', app.settings)
         self.assertIn('login_url', app.settings)
         self.assertIn('xsrf_cookies', app.settings)
         self.assertIn('bookmarks_file', app.settings)

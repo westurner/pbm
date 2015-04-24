@@ -267,12 +267,9 @@ class ChromiumBookmarks(object):
             location=None):
         bookmarks_obj = self
         date_added = pbm.utils.get_datetime_now_longdate()
-        log.debug('add folder: %r', folder_name)
-        id_ = bookmarks_obj.ids.next()
-        log.debug('id: %r', id_)
         default_folder = collections.OrderedDict((
             ("type", 'folder'),
-            ("id", id_),
+            ("id", bookmarks_obj.ids.next()),
             ("name", folder_name),
             ("date_added", date_added),
             ("date_modified", date_added),

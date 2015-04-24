@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
-import pbm.plugins
-import pbm.utils
+import pbm.main as pb
+import pbm.plugins as plugins
 
 import logging
 log = logging.getLogger(__name__)
 
 
-class BookmarkletsFolderPlugin(pbm.plugins.PromiumPlugin):
+class BookmarkletsFolderPlugin(plugins.PromiumPlugin):
 
     """
     Add a 'bookmarklets' folder with a default set of bookmarklets

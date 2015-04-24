@@ -6,7 +6,8 @@ import collections
 import logging
 import re
 
-import pbm.plugins as plugins
+import pbm.plugins
+import pbm.utils
 
 # TODO: Folder, URL, bookmarks_bar structure
 
@@ -48,7 +49,7 @@ def split_starcount_fragment(urlstr):
     return base_url, starstr, starcount
 
 
-class StarredFolderPlugin(plugins.PromiumPlugin):
+class StarredFolderPlugin(pbm.plugins.PromiumPlugin):
     STARRED_FOLDER_TITLE = 'starred'
     folder_name = 'starred'
 
@@ -150,10 +151,9 @@ class StarredFolderPlugin(plugins.PromiumPlugin):
         bookmarks_urls = []
         latest_date_added = None
         latest = None
-        ids = bookmarks_obj.get_ids()
         for base_url, bookmarks_list in base_url_map.items():
             bookmark_dict = cls.get_starred_bookmark(bookmarks_list)
-            bookmark_dict['id'] = ids.next()
+            bookmark_dict['id'] = bookmarks_obj.ids.next()
             bookmarks_urls.append(bookmark_dict)
 
             date_added = bookmark_dict.get('date_added')
@@ -170,6 +170,6 @@ class StarredFolderPlugin(plugins.PromiumPlugin):
             'date_added': latest_date_added,
             'date_modified': latest.get('date_modified') if latest else None,
             'children': bookmarks_urls[::-1],  # show latest (in sequence) first
-            'id': ids.next(),
+            'id': bookmarks_obj.ids.next(),
         }
         return output

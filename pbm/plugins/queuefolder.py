@@ -2,18 +2,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
-import pbm.plugins as plugins
+import pbm.plugins
 
 import logging
 log = logging.getLogger(__name__)
 
-class QueueFolderPlugin(plugins.PromiumPlugin):
+class QueueFolderPlugin(pbm.plugins.PromiumPlugin):
     folder_name = 'queue'
 
     def check_node_ids(self, bookmarks_obj):
         nodes = [n for n in
             bookmarks_obj.bookmarks_dict['roots']['bookmark_bar']['children']
             if n.get('name') == self.folder_name]
+        # if len(nodes) > 1:
+        #    raise Exception(nodes)
         for n in nodes:
             if n.get('children'):
                 log.debug(("unprocessed queue", n))

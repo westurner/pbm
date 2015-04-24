@@ -198,8 +198,37 @@ class TestPromiumbookmarks(unittest.TestCase):
         self.assertTrue(output)
 
         output = cb.organize(dest=self.bookmarks_path + '.test97.bak',
-                              prompt=False)
+                             prompt=False)
         self.assertTrue(output)
+
+    def test_99_pbm(self):
+        from pbm.main import ChromiumBookmarks
+        cb = ChromiumBookmarks(self.bookmarks_path)
+        output = list(cb)
+        self.assertTrue(output)
+
+        output = cb.organize(dest=self.bookmarks_path + '.test99.bak',
+                             prompt=False)
+        self.assertTrue(output)
+
+        cb2 = ChromiumBookmarks(self.bookmarks_path + '.test99.bak')
+        cbdict = cb2.bookmarks_dict
+        queue_folders = [x for x in cbdict['roots']['bookmark_bar']['children']
+                         if x.get('name') == 'queue']
+        self.assertEqual(len(queue_folders), 1, queue_folders)
+
+        queue = queue_folders[0]
+
+        max_node = None
+        max_id = 0
+        for bm in iter(cb2):
+            idstr = bm.get('id', 0)
+            _id = long(idstr)
+            if _id > max_id:
+                max_id = _id
+                max_node = bm
+
+        self.assertGreaterEqual(queue['id'], max_id) # , max_node)
 
 #   class Test0PluginManager(unittest.TestCase):
 #       def test_00_get_plugins(self):
@@ -326,7 +355,6 @@ class TestStarredFolderPlugin(PluginTestCase):
     pluginstrs = ['starred']
     folder_name = 'starred'
 
-
     def test_20_one_starred_folder_with_children(self):
         self.assertTrue(self.bookmarks_obj.bookmarks_list)
         log.debug(self.bookmarks_obj.bookmarks_list)
@@ -337,6 +365,7 @@ class TestStarredFolderPlugin(PluginTestCase):
         starred = starred_folders[0]
         self.assertTrue(starred)
         self.assertTrue(starred.get('children',[]))
+
 
 class TestAll(PluginTestCase):
     pluginstrs = pb.plugins.PluginSequence.DEFAULT_PLUGINS
@@ -351,6 +380,16 @@ class TestAll(PluginTestCase):
         queue = queue_folders[0]
         self.assertTrue(queue)
         self.assertEqual(queue.get('children'), [])
+
+
+        by_id = collections.OrderedDict()
+        for x in self.bookmarks_obj:
+            id_ = x.get('id')
+            by_id.setdefault(id_, [])
+            by_id[id_].append(x)
+
+        for id_, nodes in by_id.items():
+            self.assertEqual(len(nodes), 1, (len(nodes), nodes))
 
 
 if __name__ == '__main__':
