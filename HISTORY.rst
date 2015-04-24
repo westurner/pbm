@@ -5,9 +5,12 @@ History
 
 0.5.1 (2015-04-23)
 -------------------
-* [ ] BUG: Fix queue folder id to max
-* [ ] BUG: Fix id renumbering
-* [o] RLS: HISTORY.txt: v0.5.0, v0.5.1
+* BUG: main.py: don't call .get_ids() (queue folder id to max)
+* BUG: \*: Fix id renumbering (Note: This is still relatively unsolved)
+* BUG: utils.py: generate longdates
+* TST: tests/test_pbm.py: test that queue['id'] is the max
+* REF: \*: regular imports
+* RLS: HISTORY.txt: v0.5.0, v0.5.1
 
 0.5.0 (2015-04-23)
 -------------------
