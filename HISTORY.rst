@@ -3,6 +3,10 @@
 History
 =======
 
+0.5.3 (2015-04-23)
+-------------------
+* BUG: app.py: main argv handling, logging
+
 0.5.2 (2015-04-23)
 -------------------
 * RLS: version v0.5.2

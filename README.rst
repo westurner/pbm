@@ -79,3 +79,12 @@ Reorganize all bookmarks into Bookmarks Bar folders:
 
    bmarks=$(pbm -l | grep "Profile 1" | head -n1)
    pbm --organize "${bmarks}"
+
+Serve and search bookmarks with the Tornado webapp:
+
+.. code:: bash
+
+   pbmweb -H localhost -P 8080 -f "${bmarks}"
+
+Then access the searchable bookmarks jstree at
+http://localhost:28881/bookmarks/chrome
