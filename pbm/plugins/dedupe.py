@@ -2,12 +2,13 @@
 import collections
 import logging
 
-import pbm.plugins as plugins
+import pbm.plugins
 
 log = logging.getLogger(__name__)
 
 
 class DedupeObj(object):
+
     def __init__(self):
         self.dict = collections.OrderedDict()
 
@@ -27,7 +28,8 @@ class DedupeObj(object):
             return False
 
 
-class DedupePlugin(plugins.PromiumPlugin):
+class DedupePlugin(pbm.plugins.PromiumPlugin):
+
     def preprocess_bookmarks(self, bookmarks_obj):
         bookmarks_dict = bookmarks_obj.bookmarks_dict
         bookmarks_obj.bookmarks_dict = (
@@ -45,7 +47,7 @@ class DedupePlugin(plugins.PromiumPlugin):
                 dedupe_dict[key] = bookmark
             else:
                 continue
-        return itervalues(dedupe_dict)
+        return pbm.utils.itervalues(dedupe_dict)
 
     @staticmethod
     def dedupe_bookmarks_dict(bookmarks_dict):

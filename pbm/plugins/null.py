@@ -4,11 +4,13 @@ from __future__ import print_function
 
 import logging
 
-import pbm.plugins as plugins
+import pbm.plugins
 
 log = logging.getLogger(__name__)
 
-class NullPlugin(plugins.PromiumPlugin):
+
+class NullPlugin(pbm.plugins.PromiumPlugin):
+
     def preprocess_bookmarks(self, bookmarks_obj):
         return bookmarks_obj
 

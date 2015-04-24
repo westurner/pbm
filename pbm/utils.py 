@@ -29,7 +29,7 @@ def datetime_to_longdate(dt):
 def get_datetime_now_longdate(dt=None):
     if dt is None:
         dt = datetime.datetime.now()
-    return datetime_to_longdate(dt)
+    return utils.datetime_to_longdate(dt)
 
 
 
