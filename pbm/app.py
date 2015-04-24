@@ -6,6 +6,7 @@ pbm_app
 """
 
 import json
+import logging
 import os.path
 
 import tornado
@@ -14,6 +15,8 @@ import tornado.ioloop
 
 import pbm.main
 import utils
+
+log = logging.getLogger('pbm.app')
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -207,9 +210,9 @@ class Test_pbm_app(unittest.TestCase):
         self.assertIn('cb', app.settings)
 
 
-def main(argv=[__name__]):
+def main(argv=None):
     import optparse
-    import logging
+    import sys
 
     prs = optparse.OptionParser(usage="%prog : args")
 
@@ -243,14 +246,15 @@ def main(argv=[__name__]):
     prs.add_option('-t', '--test',
                    dest='run_tests',
                    action='store_true',)
+    args = list(argv) if argv is not None else sys.argv[1:]
+    (opts, args) = prs.parse_args(args=args)
 
-    (opts, args) = prs.parse_args(args=argv[1:])
-
-    if not opts.quiet:
-        logging.basicConfig()
-
-        if opts.verbose:
-            logging.getLogger().setLevel(logging.DEBUG)
+    loglevel = logging.INFO
+    if opts.quiet:
+        loglevel = logging.ERROR
+    if opts.verbose:
+        loglevel = logging.DEBUG
+    logging.basicConfig(level=loglevel)
 
     if opts.run_tests:
         import sys
@@ -272,6 +276,8 @@ def main(argv=[__name__]):
 
     import tornado.httpserver
     try:
+        log.info("Serving at http://%s:%s/", opts.host, opts.port)
+        log.info("conf: %r", conf)
         server = tornado.httpserver.HTTPServer(app)
         server.bind(opts.port)  # TODO: host
         server.start(n_procs)  # forks one process per cpu
@@ -283,4 +289,4 @@ def main(argv=[__name__]):
 
 if __name__ == "__main__":
     import sys
-    sys.exit(main(argv=sys.argv))
+    sys.exit(main(argv=sys.argv[1:]))
