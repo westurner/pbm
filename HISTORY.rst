@@ -3,6 +3,10 @@
 History
 =======
 
+0.5.2 (2015-04-23)
+-------------------
+* RLS: version v0.5.2
+
 0.5.1 (2015-04-23)
 -------------------
 * BUG: main.py: don't call .get_ids() (queue folder id to max)
