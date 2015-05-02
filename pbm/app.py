@@ -51,12 +51,19 @@ class LoginHandler(BaseHandler):
 
 class BookmarksBaseHandler(BaseHandler):
 
-    def initialize(self, bookmarks_file=None):
+    def initialize(self,
+                   bookmarks_file=None,
+                   HTTP_ACCESS_CONTROL_ALLOW_ORIGIN=None):
         if bookmarks_file is None:
             bookmarks_file = self.settings['bookmarks_file']
             self.cb = self.settings['cb']
         else:
             self.cb = pbm.main.ChromiumBookmarks(bookmarks_file)
+
+        if HTTP_ACCESS_CONTROL_ALLOW_ORIGIN:
+            # HTTP CORS
+            self.set_header('Access-Control-Allow-Origin',
+                            HTTP_ACCESS_CONTROL_ALLOW_ORIGIN)
 
 
 class BookmarksJSONHandler(BookmarksBaseHandler):
