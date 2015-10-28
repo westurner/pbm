@@ -18,7 +18,9 @@ requirements = [
 
 test_requirements = [
     'tornado',
-    'jinja2'
+    'jinja2',
+    'urlobject',
+    'rdflib',
 ]
 
 setup(
