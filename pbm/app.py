@@ -26,6 +26,7 @@ class BaseHandler(tornado.web.RequestHandler):
 
 
 class MainHandler(BaseHandler):
+    template_path = 'main.jinja'
 
     def get(self):
         if not self.current_user:
@@ -33,16 +34,16 @@ class MainHandler(BaseHandler):
             return
 #        name = tornado.escape.xhtml_escape(self.current_user)
 #        self.write("Hello, " + name)
-        template_name = 'main.jinja'
-        t = utils.get_template(template_name)
+        t = utils.get_template(self.template_path)
         htmlstr = t.render({'name': self.current_user})
         self.write(htmlstr)
 
 
 class LoginHandler(BaseHandler):
+    template_path = 'templates/login.html'
 
     def get(self):
-        self.render('templates/login.html')
+        self.render(self.template_path)
 
     def post(self):
         self.set_secure_cookie("user", self.get_argument("name"))
@@ -96,11 +97,11 @@ class BookmarksLinksJSONHandler(BookmarksBaseHandler):
 
 
 class BookmarksListHandler(BookmarksBaseHandler):
+    template_path = 'bookmarks_list_partial.jinja'
 
     @tornado.web.authenticated
     def get(self):
-        template_name = 'bookmarks_list_partial.jinja'
-        t = utils.get_template(template_name)
+        t = utils.get_template(self.template_path)
         htmlstr = t.render({
             'bookmarks': self.cb,
             'bookmarks_iter': iter(self.cb)})
@@ -137,11 +138,11 @@ def rdf_uri_escape(url):
 
 
 class BookmarksTreeHandler(BookmarksBaseHandler):
+    template_path = 'bookmarks_tree_partial.jinja'
 
     @tornado.web.authenticated
     def get(self):
-        template_name = 'bookmarks_tree_partial.jinja'
-        t = utils.get_template(template_name)
+        t = utils.get_template(self.template_path)
         htmlstr = t.render({
             'bookmarks': self.cb,
             'bookmarks_iter': iter(self.cb),
@@ -151,11 +152,11 @@ class BookmarksTreeHandler(BookmarksBaseHandler):
 
 
 class BookmarksHandler(BaseHandler):
+    template_path = 'bookmarks.jinja'
 
     @tornado.web.authenticated
     def get(self):
-        template_name = 'bookmarks.jinja'
-        t = utils.get_template(template_name)
+        t = utils.get_template(self.template_path)
         htmlstr = t.render()
         self.write(htmlstr)
 
