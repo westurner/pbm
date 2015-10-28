@@ -27,7 +27,7 @@ setup(
     name='pbm',
     version='0.5.3',
     description=(
-        'pbm works with Chrome and Chromium bookmarks JSON.'),
+        'pbm works with Chromium bookmarks JSON.'),
     long_description=readme + '\n\n' + history,
     author='Wes Turner',
     author_email='wes@wrd.nu',
