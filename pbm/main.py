@@ -770,7 +770,7 @@ def get_option_parser():
                    dest='organize',
                    action='store_true',
                    help="Organize Bookmarks")
-    prs.add_option('--skip-prompt',
+    prs.add_option('-y', '--yes', '--skip-prompt',
                    dest='skip_prompt',
                    action='store_true',
                    help="Skip organize prompt")
