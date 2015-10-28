@@ -12,7 +12,8 @@ readme = open('README.rst').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 requirements = [
-    'jinja2'
+    'jinja2',
+    'tornado'
 ]
 
 test_requirements = [
