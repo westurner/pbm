@@ -824,7 +824,7 @@ def main(argv=None,
             print(path, file=stdout)
         return 0
 
-    opts.bookmarks_path = './Bookmarks'
+    opts.bookmarks_path = 'Bookmarks'
     if len(args):
         opts.bookmarks_path = args[0]
 
