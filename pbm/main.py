@@ -37,6 +37,7 @@ import pbm.plugins as plugins
 
 
 
+logging.basicConfig(format="# %(levelname)s [%(name)s] %(message)s")
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
