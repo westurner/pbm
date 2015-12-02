@@ -31,6 +31,9 @@ htmlcov
 # Translations
 *.mo
 
+# Vim
+*.swp
+*.swo
 # UndoTree
 *.un~
 
@@ -51,3 +54,5 @@ docs/_build
 
 
 Bookmarks*.bkp
+
+
