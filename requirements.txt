@@ -1,2 +1,6 @@
 wheel==0.23.0
 tornado
+
+## jinja_tornado
+#-e git+https://github.com/thkang2/jinja_tornado@01fa568#egg=jinja_tornado
+-e ./src/jinja_tornado

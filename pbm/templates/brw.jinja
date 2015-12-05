@@ -1,0 +1,79 @@
+<!DOCTYPE html >
+<html>
+  <head>
+    <title>brw - pbm</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+    <script src="/static/brw/brw.js"></script>
+    <script>
+	var json_url;
+	json_url = "/bookmarks/chrome/links.json";
+	var brw0;
+	$(document).ready(function() {
+	  brw0 = $("#nav").brw({
+	    "seconds_per_frame": 20,
+	    "json_url": json_url
+	  });
+	});
+    </script>
+    <style>
+      div#nav {
+        background: #f2f2f2;
+        border-bottom: 1px solid #dcdcdc;
+        padding: 0 4px;
+      }
+      div#content_frame {
+        box-shadow: -2px -2px 6px #e0e0e0;
+      }
+      div#link_list_window {
+        display: none;
+        z-index: 10000;
+        width: 800px;
+        height: 300px;
+        background: #f2f2f2;
+        border: 1px solid #dcdcdc;
+        position: absolute;
+        right: 0;
+        top: 20px;
+        padding: 4px;
+        overflow: scroll;
+      }
+      ul#link_list {
+        list-style-type: none;
+        padding-left: 6px;
+      }
+      ul#link_list a.active {
+        font-weight: bold;
+      }
+      div#carousel_options {
+        float: right;
+      }
+      div#time_display {
+        display: block;
+        width: 20px;
+      }
+
+      input#seconds_per_frame, input#time_display {
+        width: 30px;
+      }
+    </style>
+  </head>
+  <body style="margin:0px;padding:0px;overflow:hidden">
+    <div id="nav" style="height:20px;position:absolute;width:100%">
+      <a id="current" href="#" target="_blank">[current URL]</a>
+      <div id="link_list_window">
+        <ul id="link_list"></ul>
+      </div>
+      <div id="carousel_options">
+        <button id="link_list_toggle" href='#'>toggle link list</button>
+        <button id="prev" href="#">Prev</button>
+        <button id="next" href="#">Next</button>
+        <label><input id="carousel_on_off" type="checkbox">on/off</input></label>
+        <input id="seconds_per_frame"></input>
+        <input id="time_display"></input>
+      </div>
+    </div>
+    <div class="content_frame">
+      <iframe id="main" frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;height:100%;width:100%;position:absolute;top:21px;left:0px;right:0px;bottom:0px" height="100%" width="100%"></iframe>
+    </div>
+  </body>
+</html>

@@ -13,7 +13,8 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 requirements = [
     'jinja2',
-    'tornado'
+    'tornado',
+    #'jinja_tornado'
 ]
 
 test_requirements = [

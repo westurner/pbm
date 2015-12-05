@@ -18,7 +18,13 @@
 
     /* bootstrap */
     div.container {
-      width: 100% !important;
+      width: 100%;
+    }
+
+    div#jstree {
+	width: 800px !important;
+	/* overflow-wrap: break-word; */
+	word-wrap: break-word;
     }
 
     #jstree a {
@@ -32,6 +38,11 @@
     .jstree-node {
       margin-left: 2px;
     }
+    .jstree-node a {
+      word-wrap: break-word;
+      word-break: break-word;
+    }
+
     .jstree-search {
       font-size: 1.2em;
       font-weight: bold;

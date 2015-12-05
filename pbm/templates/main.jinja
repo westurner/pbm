@@ -1,19 +1,84 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>bookmarks</title>
+  <title>{% block title %}{% if page_title %}{{ page_title }}{% else %}home{% endif %}{% endblock %} | pbm</title>
+  <style>
+    h1, h2, h3, h4, h5, h6 { color: #878787; }
+    body { background-color: #f0f0f0; margin: 42px; margin-top: 24px; }
+    span.bracket { color: #d0d0d0; vertical-align: middle; display: none; }
+    ul.navlinks { list-style-type: none; padding-left: 0; }
+    ul.navlinks a { display: inline-block; word-wrap: none; width: 200px; }
+    div#footer h1 { color: #BBBBBB; }
+    // div#footer h1 a, footer h1 a { text-decoration: none !important; }
+    div#footer h1 a:visited, footer h1 a:visited { color: inherit; }
+  </style>
+  {%- block extrahead_css %}
+  <style>
+    div.navlinks_hdr ul {
+      list-style-type: none;
+      padding-left: 0;
+      }
+    div.navlinks_hdr ul li {
+      display: inline-block;
+      padding-right: 8px;
+    }
+
+    span.bracketx {
+      color: #bbbbbb;
+    }
+  </style>
+{%- endblock extrahead_css %}
 </head>
 <body>
-<ul>
-{%- set urls=[
-    '/bookmarks/chrome',
-    '/bookmarks/chrome/list',
-    '/bookmarks/chrome/links.json',
-    '/static/brw/index.html'
-] %}
+
+{%- block navlinks %}
+<div class="navlinks_hdr" >
+  <ul>
+    <li><a href="/">home</a></li>
+    <li><a href="/about">about</a></li>
+    {% if current_user %}
+      <li><a href="/logout" class="logout">logout</a>
+        {#
+        <span class="bracketx">[</span>
+        <span class="current_user">{{ current_user }}<span>
+        <span class="bracketx">]</span>
+        #}
+      </li>
+    {% else %}
+      <li><a href="/login">login</a></li>
+    {% endif %}
+  </ul>
+</div>
+{%- endblock navlinks %}
+{%- block body %}
+
+
+{%- if not current_user %}
+<div>
+{% include "loginform_partial.jinja" %}
+</div>
+{%- endif %}
+
+<div>
+<ul class="navlinks">
 {%- for url in urls %}
-<li><a href="{{ url }}">{{ url }}</a></li>
+<li><div>
+    <span class="bracket">[</span>
+    <a href="{{ url.url }}">{{ url.name }}</a>
+    <span class="bracket">](</span>
+    <a href="{{ url.url }}">{{ url.url }}</a>
+    <span class="bracket">)</span>
+    </span>
+</li>
 {%- endfor %}
 </ul>
+</div>
+
+{%- endblock body %}
 </body>
+<div id="footer">
+{%- block footer %}
+  <h1><a href="/">pbm</a></h1>
+{%- endblock footer %}
+</div>
 </html>

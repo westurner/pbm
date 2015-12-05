@@ -1,0 +1,8 @@
+<div class="loginform">
+  <form action="/login" method="post">
+    {{ xsrf_form_html() }}{#{% module xsrf_form_html() %}#}
+    <label>Name: <input type="text" name="name"></label>
+    <label>Pass: <input type="password" name="pass"></label>
+    <input type="submit" value="Sign in">
+  </form>
+</div>
