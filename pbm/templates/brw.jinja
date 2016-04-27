@@ -3,6 +3,8 @@
   <head>
     <title>brw - pbm</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
+
     <script src="/static/brw/brw.js"></script>
     <script>
 	var json_url;
@@ -25,7 +27,8 @@
         box-shadow: -2px -2px 6px #e0e0e0;
       }
       div#link_list_window {
-        display: none;
+        display: block;
+        visibility: hidden;
         z-index: 10000;
         width: 800px;
         height: 300px;
@@ -35,11 +38,12 @@
         right: 0;
         top: 20px;
         padding: 4px;
-        overflow: scroll;
+        overflow-y: scroll;
       }
       ul#link_list {
         list-style-type: none;
         padding-left: 6px;
+        word-wrap: break-word;
       }
       ul#link_list a.active {
         font-weight: bold;
