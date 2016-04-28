@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 """
-pbm_app
+pbm/app.py -- pbmweb
 """
 
 import json
@@ -13,50 +13,149 @@ import tornado
 import tornado.web
 import tornado.ioloop
 
+from jinja_tornado import JinjaApp, JinjaTemplateMixin
+
 import pbm.main
 import utils
 
 log = logging.getLogger('pbm.app')
 
+SECURE_USER_COOKIE_KEY = "user"
+
 
 class BaseHandler(tornado.web.RequestHandler):
 
     def get_current_user(self):
-        return self.get_secure_cookie("user")
+        return self.get_secure_cookie(SECURE_USER_COOKIE_KEY)
+
+class BaseHandlerJinja(JinjaTemplateMixin, BaseHandler):
+    pass
 
 
-class MainHandler(BaseHandler):
-
-    def get(self):
-        if not self.current_user:
-            self.redirect("/login")
-            return
-#        name = tornado.escape.xhtml_escape(self.current_user)
-#        self.write("Hello, " + name)
-        template_name = 'main.jinja'
-        t = utils.get_template(template_name)
-        htmlstr = t.render({'name': self.current_user})
-        self.write(htmlstr)
-
-
-class LoginHandler(BaseHandler):
+class MainHandler(BaseHandlerJinja):
+    template_path = 'main.jinja'
 
     def get(self):
-        self.render('templates/login.html')
+        ctxt = ({
+            'current_user': self.current_user,
+            'urls': self._get_urls(self.current_user)})
+        return self.render(self.template_path, **ctxt)
+        #self.write(htmlstr)
+
+    def _get_urls(self, current_user=None):
+        """Get a list of URLs for the current user
+
+        Keyword Arguments:
+            current_user (str|None): e.g. ``self.current_user``
+
+        Returns:
+            list[dict]: ``{'name': str, 'url': str}``
+        """
+        urls = [
+            {'name': 'home',
+             'url': '/', },
+        ]
+        if current_user is None:
+            urls.extend([
+                {'name': 'login',
+                 'url': '/login', },
+            ])
+        else:
+            urls.extend([
+                {'name': 'bookmarks list #html',
+                 'url': '/bookmarks/chrome/list'},
+                {'name': 'bookmarks tree #html #rdfa',
+                 'url': '/bookmarks/chrome/tree'},
+                {'name': 'bookmarks tree #html #rdfa #js',
+                 'url': '/bookmarks'},
+                {'name': 'bookmark links #json',
+                 'url': '/bookmarks/chrome/links.json'},
+                {'name': 'brw',
+                 'url': '/brw'},
+                {'name': 'brw original',
+                 'url': '/static/brw/index.html'},
+                {'name': 'bookmarks tree #json',
+                 'url': '/bookmarks/chrome/json'},
+            ])
+        urls.extend([
+            {'name': 'about',
+             'url': '/about'},
+        ])
+        if current_user:
+            urls.extend([
+                {'name': 'logout',
+                 'url': '/logout'},
+            ])
+        return urls
+
+class AboutHandler(BaseHandlerJinja):
+    template_path = 'about.jinja'
+
+    def get(self):
+        return self.render(self.template_path)
+
+class LoginHandler(BaseHandlerJinja):
+    template_path = 'login.jinja'
+
+    def get(self):
+        log.debug(self.application.jinja_environment.loader.__dict__)
+        self.render(self.template_path)
+
+    @staticmethod
+    def check_login(name, pass_):
+        if not name:
+            return False
+        if not pass_:
+            return False
+        if not hasattr(name, '__len__'):
+            return False
+        if not hasattr(pass_, '__len__'):
+            return False
+        if len(name) <= 2:
+            return False
+        if name == pass_[::-1]:
+            return True
+        return False
 
     def post(self):
-        self.set_secure_cookie("user", self.get_argument("name"))
+        name = self.get_argument("name")
+        pass_ = self.get_argument("pass")
+        auth_ok = self.check_login(name, pass_)
+
+        if auth_ok:
+            self.set_secure_cookie(SECURE_USER_COOKIE_KEY,
+                                name)
+            self.redirect("/")
+        else:
+            self.redirect("/login")
+
+
+class LogoutHandler(BaseHandler):
+
+    def get(self):
+        self.clear_cookie('user')
+        self.redirect('/')
+
+    def post(self):
+        self.clear_cookie('user')
         self.redirect("/")
 
 
 class BookmarksBaseHandler(BaseHandler):
 
-    def initialize(self, bookmarks_file=None):
+    def initialize(self,
+                   bookmarks_file=None,
+                   HTTP_ACCESS_CONTROL_ALLOW_ORIGIN=None):
         if bookmarks_file is None:
             bookmarks_file = self.settings['bookmarks_file']
             self.cb = self.settings['cb']
         else:
             self.cb = pbm.main.ChromiumBookmarks(bookmarks_file)
+
+        if HTTP_ACCESS_CONTROL_ALLOW_ORIGIN:
+            # HTTP CORS
+            self.set_header('Access-Control-Allow-Origin',
+                            HTTP_ACCESS_CONTROL_ALLOW_ORIGIN)
 
 
 class BookmarksJSONHandler(BookmarksBaseHandler):
@@ -89,11 +188,11 @@ class BookmarksLinksJSONHandler(BookmarksBaseHandler):
 
 
 class BookmarksListHandler(BookmarksBaseHandler):
+    template_path = 'bookmarks_list_partial.jinja'
 
     @tornado.web.authenticated
     def get(self):
-        template_name = 'bookmarks_list_partial.jinja'
-        t = utils.get_template(template_name)
+        t = utils.get_template(self.template_path)
         htmlstr = t.render({
             'bookmarks': self.cb,
             'bookmarks_iter': iter(self.cb)})
@@ -130,11 +229,11 @@ def rdf_uri_escape(url):
 
 
 class BookmarksTreeHandler(BookmarksBaseHandler):
+    template_path = 'bookmarks_tree_partial.jinja'
 
     @tornado.web.authenticated
     def get(self):
-        template_name = 'bookmarks_tree_partial.jinja'
-        t = utils.get_template(template_name)
+        t = utils.get_template(self.template_path)
         htmlstr = t.render({
             'bookmarks': self.cb,
             'bookmarks_iter': iter(self.cb),
@@ -144,13 +243,22 @@ class BookmarksTreeHandler(BookmarksBaseHandler):
 
 
 class BookmarksHandler(BaseHandler):
+    template_path = 'bookmarks.jinja'
 
     @tornado.web.authenticated
     def get(self):
-        template_name = 'bookmarks.jinja'
-        t = utils.get_template(template_name)
+        t = utils.get_template(self.template_path)
         htmlstr = t.render()
         self.write(htmlstr)
+
+class BrwHandler(BaseHandler):
+    template_path = 'brw.jinja'
+
+    @tornado.web.authenticated
+    def get(self):
+      t = utils.get_template(self.template_path)
+      htmlstr = t.render()
+      self.write(htmlstr)
 
 
 def make_app(config=None, DEFAULT_COOKIE_SECRET="."):
@@ -165,7 +273,14 @@ def make_app(config=None, DEFAULT_COOKIE_SECRET="."):
         "xsrf_cookies": True,
 
         'bookmarks_file': os.path.join(
-            os.path.dirname(__file__), '..', 'tests/data/Bookmarks')
+            os.path.dirname(__file__), '..', 'tests', 'data', 'Bookmarks'),
+
+        # jinja2 (jinja_tornado)
+        'template_path': os.path.join(
+            os.path.dirname(__file__), 'templates'),
+        'auto_reload': True,  # TODO: DEBUG
+        'cache_size': 50,
+        'autoescape': True
     })
     if config is not None:
         _conf.update(config)
@@ -175,13 +290,20 @@ def make_app(config=None, DEFAULT_COOKIE_SECRET="."):
 
     application = tornado.web.Application([
         (r"/", MainHandler),
+        (r"/about", AboutHandler),
         (r"/login", LoginHandler),
+        (r"/logout", LogoutHandler),
+        (r"/brw", BrwHandler),
+        (r"/bookmarks", BookmarksHandler),
         (r"/bookmarks/chrome", BookmarksHandler),
         (r"/bookmarks/chrome/json", BookmarksJSONHandler),
         (r"/bookmarks/chrome/links.json", BookmarksLinksJSONHandler),
         (r"/bookmarks/chrome/list", BookmarksListHandler),
         (r"/bookmarks/chrome/tree", BookmarksTreeHandler),
     ], **_conf)
+
+    environment = JinjaApp.init_app(application)  # jinja_tornado
+
     return application
 
 
@@ -223,11 +345,18 @@ def main(argv=None):
     prs.add_option('-H', '--host',
                    dest='host',
                    default='localhost',
-                   action='store')
+                   action='store',
+                   help='default: localhost')
     prs.add_option('-P', '--port',
                    dest='port',
                    default='28881',
-                   action='store')
+                   action='store',
+                   help='default: 28881')
+
+    prs.add_option('-o', '--open', '--open-browser',
+                   dest='open_browser',
+                   action='store_true',
+                   help='Open a webbrowser to the pbmweb URL')
 
     prs.add_option('-r', '--reload', '--autoreload',
                    dest='autoreload',
@@ -272,19 +401,39 @@ def main(argv=None):
     if opts.debug:
         conf['debug'] = True
         n_procs = 1
+    if opts.open_browser:
+        conf['open_browser'] = True
     app = make_app(conf)
 
     import tornado.httpserver
     try:
-        log.info("Serving at http://%s:%s/", opts.host, opts.port)
-        log.info("conf: %r", conf)
+        url = 'http://{0.host}:{0.port}/'.format(opts)
+        log.info("Serving at url: %s" % url)
+        log.info("Conf:\%s", json.dumps(conf, indent=2))
+
         server = tornado.httpserver.HTTPServer(app)
-        server.bind(opts.port)  # TODO: host
+        server.bind(opts.port, address=opts.host)
         server.start(n_procs)  # forks one process per cpu
+
+        if conf.get('open_browser', None) is not None:
+            import subprocess
+            import sys
+            cmd = [sys.executable, '-m', 'webbrowser', '-t']
+            #subprocess.Popen(cmd)
+            #webbrowser.open_new_tab(url)
+            import os
+            cmd = ' '.join(cmd) + ' ' + repr(url) + ' &'
+            print(cmd)
+            #os.system(cmd)
+            subprocess.Popen(cmd, shell=True)
+            log.info("Opened browser to: %s" % url)
+
         tornado.ioloop.IOLoop.current().start()
     except KeyboardInterrupt:
         tornado.ioloop.IOLoop.current().stop()
         server.stop()
+
+
     return 0
 
 if __name__ == "__main__":

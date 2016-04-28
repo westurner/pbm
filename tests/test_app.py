@@ -55,7 +55,7 @@ class Test_app(tornado.testing.AsyncHTTPTestCase):
             resp = self.fetch('/')
             self.assertEqual(resp.code, 200)
             self.assertEqual(URLObject(resp.effective_url).path, '/')
-            self.assertIn('<a href="/bookmarks/chrome/dict">', resp.body)
+            self.assertIn('<a href="/bookmarks/chrome">', resp.body)
             # raise Exception((resp, dir(resp)))
 
     def test_bookmarks(self):

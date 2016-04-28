@@ -7,24 +7,28 @@ try:
 except ImportError:
     from distutils.core import setup
 
-
+__VERSION__ = '0.6.0'
 readme = open('README.rst').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 requirements = [
-    'jinja2'
+    'jinja2',
+    'tornado',
+    #'jinja_tornado'
 ]
 
 test_requirements = [
     'tornado',
-    'jinja2'
+    'jinja2',
+    'urlobject',
+    'rdflib',
 ]
 
 setup(
     name='pbm',
-    version='0.5.3',
+    version=__VERSION__,
     description=(
-        'pbm works with Chrome and Chromium bookmarks JSON.'),
+        'pbm works with Chromium bookmarks JSON.'),
     long_description=readme + '\n\n' + history,
     author='Wes Turner',
     author_email='wes@wrd.nu',

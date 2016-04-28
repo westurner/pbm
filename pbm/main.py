@@ -37,6 +37,7 @@ import pbm.plugins as plugins
 
 
 
+#logging.basicConfig(format="# %(levelname)s [%(name)s] %(message)s")
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -770,7 +771,7 @@ def get_option_parser():
                    dest='organize',
                    action='store_true',
                    help="Organize Bookmarks")
-    prs.add_option('--skip-prompt',
+    prs.add_option('-y', '--yes', '--skip-prompt',
                    dest='skip_prompt',
                    action='store_true',
                    help="Skip organize prompt")
@@ -824,7 +825,7 @@ def main(argv=None,
             print(path, file=stdout)
         return 0
 
-    opts.bookmarks_path = './Bookmarks'
+    opts.bookmarks_path = 'Bookmarks'
     if len(args):
         opts.bookmarks_path = args[0]
 

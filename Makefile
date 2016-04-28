@@ -44,7 +44,7 @@ lint:
 test:
 	# python setup.py test
 	#$(PROMIUMBOOKMARKS) -t
-	nosetests ./tests/test_pbm.py
+	nosetests ./tests/test_pbm.py ./tests/test_app.py
 
 nosetest:
 	nosetests --with-coverage ./pbm.py
@@ -82,9 +82,19 @@ dist: clean
 # pbm Makefile
 ##############################################################################
 
+UNAME_S:=$(shell uname -s)
+
 #PROFILE_NAME:="Default"
 PROFILE_NAME:=Profile\ 1
+
+#CHROMIUM_DIR  (see also: $(pbm -l))  [make ls]
+ifeq ($(UNAME_S),Linux)
+CHROMIUM_DIR=$${HOME}/.config/google-chrome
+endif
+ifeq ($(UNAME_S),Darwin)
 CHROMIUM_DIR=$${HOME}/Library/Application\ Support/Google/Chrome
+endif
+
 CHROMIUM_PROFILE=$(CHROMIUM_DIR)/$(PROFILE_NAME)
 CHROMIUM_BOOKMARKS=$(CHROMIUM_PROFILE)/Bookmarks
 
@@ -100,6 +110,9 @@ debug:
 
 ls-profiles:
 	$(PROMIUMBOOKMARKS) -l
+
+l: ls-profiles
+ls: ls-profiles
 
 rebuild:
 	$(PROMIUMBOOKMARKS) --overwrite $(CHROMIUM_BOOKMARKS)

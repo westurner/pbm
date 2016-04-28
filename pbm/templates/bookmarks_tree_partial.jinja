@@ -1,6 +1,7 @@
 {#
+bookmarks_tree_partial.jinja: Recursive HTML+RDFa bookmarks JSON tree template
 <h1>bookmarks_dict</h1>
-<textarea style="width:80%; margin: 0 auto; word-break: break-work;">
+<textarea style="width:80%; margin: 0 auto; word-wrap: break-word;">
 {{ bookmarks.bookmarks_dict }}
 </textarea>
 #}
@@ -48,6 +49,7 @@ typeof="pb:BookmarksTree">
       {%- macro url_start(node, fldr_path) %}id="b-{{ node.id }}" class="bookmark {{ node.type }}" about="#{{ node["id"] }}" typeof="pb:URL">
         <meta property="pb:id" content="{{ node.id }}" datatype="xsd:integer" />
         <meta property="pb:type" content="{{ node.type }}"/>
+	<span class="brwlink"><a target="_brw" href="/brw##{{ node.url }}">##</a></span>
         <span class="bracket">[</span><span class="b-name"
             property="schema:name"><a href="{{ node.url }}" title="{{ node.url }}" target="_blank">{{ node.name }}</a></span><span class="bracket">]</span
             ><span class="bracket">(</span><span class="b-url"><a
