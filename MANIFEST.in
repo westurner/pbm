@@ -16,3 +16,5 @@ recursive-include docs *.rst conf.py Makefile make.bat
 recursive-exclude tests/data *.bkp *.bak
 
 recursive-include pbm/static *.html *.js
+
+recursive-include pbm/templates *.jinja
