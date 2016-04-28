@@ -7,14 +7,14 @@ try:
 except ImportError:
     from distutils.core import setup
 
-__VERSION__ = '0.6.1'
+__VERSION__ = '0.6.2'
 readme = open('README.rst').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 requirements = [
     'jinja2',
     'tornado',
-    #'jinja_tornado'
+    'jinja_tornado'
 ]
 
 test_requirements = [

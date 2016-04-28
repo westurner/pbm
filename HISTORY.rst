@@ -7,17 +7,31 @@ History
 
 
 
-release/0.6.1 (2016-04-28 16:26:43 -0500)
+release/0.6.2 (2016-04-28 18:16:24 -0500)
 -----------------------------------------
 ::
 
-   git log --reverse --pretty=format:'* %s [%h]' v0.6.0..release/0.6.1
+   git log --reverse --pretty=format:'* %s [%h]' v0.6.1..release/0.6.2
+
+* MRG: Merge tag 'v0.6.1' into develop [f69ab60]
+* BUG,BLD: setup.py: install_requires jinja_tornado [189210d]
+* BLD: src/jinja_tornado: upgrade [850198b]
+* RLS: setup.py, __init__: v0.6.2 [5298786]
+
+
+v0.6.1 (2016-04-28 16:28:14 -0500)
+----------------------------------
+::
+
+   git log --reverse --pretty=format:'* %s [%h]' v0.6.0..v0.6.1
 
 * MRG: Merge tag 'v0.6.0' into develop [c74bd7f]
 * BUG,DOC: HISTORY.rst: escape \* [d14de7c]
 * BLD: MANIFEST.in: recursive-include pbm/static *.html *.js [bd07338]
 * BLD: Makefile: release w/ twine because HTTPS [56a72d3]
 * RLS: setup.py, __init__: v0.6.1 [511ee6a]
+* DOC: HISTORY.rst: 'git-changelog.py -r release/0.6.1 --hdr=- | pbcopy' [d884851]
+* MRG: Merge branch 'release/0.6.1' [d5ddf17]
 
 
 v0.6.0 (2016-04-28 16:11:26 -0500)
