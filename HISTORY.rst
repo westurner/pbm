@@ -5,11 +5,26 @@ History
 
 
 
-release/0.6.0 (2016-04-28 16:06:36 -0500)
+
+
+release/0.6.1 (2016-04-28 16:26:43 -0500)
 -----------------------------------------
 ::
 
-   git log --reverse --pretty=format:'* %s [%h]' v0.5.3..release/0.6.0
+   git log --reverse --pretty=format:'* %s [%h]' v0.6.0..release/0.6.1
+
+* MRG: Merge tag 'v0.6.0' into develop [c74bd7f]
+* BUG,DOC: HISTORY.rst: escape \* [d14de7c]
+* BLD: MANIFEST.in: recursive-include pbm/static *.html *.js [bd07338]
+* BLD: Makefile: release w/ twine because HTTPS [56a72d3]
+* RLS: setup.py, __init__: v0.6.1 [511ee6a]
+
+
+v0.6.0 (2016-04-28 16:11:26 -0500)
+----------------------------------
+::
+
+   git log --reverse --pretty=format:'* %s [%h]' v0.5.3..v0.6.0
 
 * Merge tag 'v0.5.3' into develop [d330a7e]
 * ENH: app.py: add HTTP_ACCESS_CONTROL_ALLOW_ORIGIN (optional CORS) [a17eb19]
@@ -36,6 +51,8 @@ release/0.6.0 (2016-04-28 16:06:36 -0500)
 * BLD: pbm/static/brw: upgrade [a782e17]
 * RLS: setup.py, __init__: v0.6.0 [dfa0da9]
 * MRG: Merge branch 'release/0.6.0' of ssh://github.com/westurner/pbm into release/0.6.0 [60875ae]
+* DOC: HISTORY.rst: 'git-changelog.py -r release/0.6.0 --hdr=- | pbcopy' [5345b84]
+* MRG: Merge branch 'release/0.6.0' [73af3ea]
 
 
 v0.5.3 (2015-04-23 21:12:41 -0500)
@@ -209,7 +226,7 @@ v0.2.2 (2014-12-13 17:33:12 -0600)
    git log --reverse --pretty=format:'* %s [%h]' v0.2.1..v0.2.2
 
 * Merge tag 'v0.2.1' into develop [d2390e9]
-* BLD: MANIFEST.in: exclude tests/data/\*.bkp [634235a]
+* BLD: MANIFEST.in: exclude tests/data/*.bkp [634235a]
 * RLS: setup.py version=0.2.2 [85b111e]
 * Merge branch 'release/0.2.2' [92b79d9]
 
