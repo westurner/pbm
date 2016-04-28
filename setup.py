@@ -7,7 +7,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-__VERSION__ = '0.6.2'
+__VERSION__ = '0.6.3'
 readme = open('README.rst').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
