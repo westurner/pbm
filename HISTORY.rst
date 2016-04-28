@@ -209,7 +209,7 @@ v0.2.2 (2014-12-13 17:33:12 -0600)
    git log --reverse --pretty=format:'* %s [%h]' v0.2.1..v0.2.2
 
 * Merge tag 'v0.2.1' into develop [d2390e9]
-* BLD: MANIFEST.in: exclude tests/data/*.bkp [634235a]
+* BLD: MANIFEST.in: exclude tests/data/\*.bkp [634235a]
 * RLS: setup.py version=0.2.2 [85b111e]
 * Merge branch 'release/0.2.2' [92b79d9]
 
