@@ -70,14 +70,13 @@ test-readme:
 	pip install readme
 	python setup.py check -r -s
 
-release: clean test-readme
-	python setup.py sdist upload
-	python setup.py bdist_wheel upload
-
 dist: clean
 	python setup.py sdist
 	python setup.py bdist_wheel
 	ls -l dist
+
+release: clean test-readme dist
+	twine upload dist/*
 
 # pbm Makefile
 ##############################################################################
