@@ -27,7 +27,7 @@ v0.6.1 (2016-04-28 16:28:14 -0500)
 
 * MRG: Merge tag 'v0.6.0' into develop [c74bd7f]
 * BUG,DOC: HISTORY.rst: escape \* [d14de7c]
-* BLD: MANIFEST.in: recursive-include pbm/static *.html *.js [bd07338]
+* BLD: MANIFEST.in: recursive-include pbm/static \*.html \*.js [bd07338]
 * BLD: Makefile: release w/ twine because HTTPS [56a72d3]
 * RLS: setup.py, __init__: v0.6.1 [511ee6a]
 * DOC: HISTORY.rst: 'git-changelog.py -r release/0.6.1 --hdr=- | pbcopy' [d884851]
