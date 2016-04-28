@@ -3,6 +3,37 @@
 History
 =======
 
+0.6.0 (2015-12-05)
+-------------------
+
+* Jinja2 templates, navlinks, CSS
+* ``/about``
+* ``--open``
+* ``brw.jinja``
+
+::
+
+   git log --reverse --pretty=format:'* %s [%h]' v0.5.3..develop
+
+* Merge tag 'v0.5.3' into develop [d330a7e]
+* ENH: app.py: add HTTP_ACCESS_CONTROL_ALLOW_ORIGIN (optional CORS) [a17eb19]
+* CLN: rm filenames ending with ' ' from sed -i' ' [17459bd]
+* BLD: setup.py, requirements.txt: add tornado as a dependency (for pbmweb) [b670e1c]
+* UBY: main.py: -y/--yes/--skip-prompt [91ff556]
+* BUG: pbm/main.py: ./Bookmarks -> Bookmarks (toward path.py/pathlib compat) [47838d0]
+* BLD: setup.py, requirements-test.txt: test deps: urlobject, rdflib [fb41197]
+* DOC: setup.py: package description [6c934cc]
+* TST,CLN: remove old /bookmarks/chrome/dict route [482f141]
+* REF: app.py: cls.template_path [e77b2b2]
+* BLD: pbm/static/brw: git submodule [1aa753f]
+* ENH: templates/main.jinja: link to //static/brw/index.html [4aa0804]
+* TST,UBY: pbm/main.py: logging.basicConfig(format=) [d50b31d]
+* BLD: Makefile: UNAME_S:=$(shell uname -s) [2a70f57]
+* CLN: .gitignore: add vim .swp, .swo [c177f25]
+* ENH: views, /logout, navlinks, /about, --open [ba9f16b]
+* BLD: pbm/static/brw: :fast_forward: to 3cb3d6f [4698efe]
+
+
 0.5.3 (2015-04-23)
 -------------------
 * BUG: app.py: main argv handling, logging
