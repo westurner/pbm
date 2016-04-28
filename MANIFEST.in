@@ -4,6 +4,8 @@ include HISTORY.rst
 include LICENSE
 include README.rst
 
+recursive-include * LICENSE*
+
 recursive-include * *.py
 recursive-include tests *
 recursive-exclude * __pycache__
@@ -14,3 +16,5 @@ recursive-include docs *.rst conf.py Makefile make.bat
 recursive-exclude tests/data *.bkp *.bak
 
 recursive-include pbm/static *.html *.js
+
+recursive-include pbm/templates *.jinja

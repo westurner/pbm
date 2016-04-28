@@ -7,16 +7,35 @@ History
 
 
 
-release/0.6.2 (2016-04-28 18:16:24 -0500)
+
+
+release/0.6.3 (2016-04-28 18:36:08 -0500)
 -----------------------------------------
 ::
 
-   git log --reverse --pretty=format:'* %s [%h]' v0.6.1..release/0.6.2
+   git log --reverse --pretty=format:'* %s [%h]' v0.6.2..release/0.6.3
+
+* MRG: Merge tag 'v0.6.2' into develop [449ad8b]
+* BUG,DOC: HISTORY.rst: escape \* [6e9f74d]
+* BUG,DOC: HISTORY.rst: escape \* [158ad09]
+* BLD: MANIFEST.in: recursive-include \* LICENSE* [251cb7e]
+* BLD: MANIFEST.in: recursive-include pbm/templates \*.jinja [bd9a93a]
+* RLS: setup.py, __init__: v0.6.3 [d477d74]
+* BLD,BUG: Makefile: build, dist [d7b62a4]
+
+
+v0.6.2 (2016-04-28 18:18:06 -0500)
+----------------------------------
+::
+
+   git log --reverse --pretty=format:'* %s [%h]' v0.6.1..v0.6.2
 
 * MRG: Merge tag 'v0.6.1' into develop [f69ab60]
 * BUG,BLD: setup.py: install_requires jinja_tornado [189210d]
 * BLD: src/jinja_tornado: upgrade [850198b]
 * RLS: setup.py, __init__: v0.6.2 [5298786]
+* DOC: HISTORY.rst: `git-changelog.py -r release/0.6.2 --hdr=- | pbcopy` [b3e6597]
+* MRG: Merge branch 'release/0.6.2' [376e14f]
 
 
 v0.6.1 (2016-04-28 16:28:14 -0500)
@@ -27,7 +46,7 @@ v0.6.1 (2016-04-28 16:28:14 -0500)
 
 * MRG: Merge tag 'v0.6.0' into develop [c74bd7f]
 * BUG,DOC: HISTORY.rst: escape \* [d14de7c]
-* BLD: MANIFEST.in: recursive-include pbm/static *.html *.js [bd07338]
+* BLD: MANIFEST.in: recursive-include pbm/static \*.html \*.js [bd07338]
 * BLD: Makefile: release w/ twine because HTTPS [56a72d3]
 * RLS: setup.py, __init__: v0.6.1 [511ee6a]
 * DOC: HISTORY.rst: 'git-changelog.py -r release/0.6.1 --hdr=- | pbcopy' [d884851]
@@ -240,7 +259,7 @@ v0.2.2 (2014-12-13 17:33:12 -0600)
    git log --reverse --pretty=format:'* %s [%h]' v0.2.1..v0.2.2
 
 * Merge tag 'v0.2.1' into develop [d2390e9]
-* BLD: MANIFEST.in: exclude tests/data/*.bkp [634235a]
+* BLD: MANIFEST.in: exclude tests/data/\*.bkp [634235a]
 * RLS: setup.py version=0.2.2 [85b111e]
 * Merge branch 'release/0.2.2' [92b79d9]
 
