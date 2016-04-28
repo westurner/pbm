@@ -70,9 +70,11 @@ test-readme:
 	pip install readme
 	python setup.py check -r -s
 
-dist: clean
-	python setup.py sdist
-	python setup.py bdist_wheel
+build: clean test-readme
+	python setup.py build
+
+dist: build
+	python setup.py sdist bdist_wheel
 	ls -l dist
 
 release: clean test-readme dist
