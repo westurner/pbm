@@ -4,24 +4,32 @@ History
 =======
 
 
-
-
-
-
-
-release/0.6.3 (2016-04-28 18:36:08 -0500)
+release/0.6.4 (2016-04-28 21:00:48 -0500)
 -----------------------------------------
 ::
 
-   git log --reverse --pretty=format:'* %s [%h]' v0.6.2..release/0.6.3
+   git log --reverse --pretty=format:'* %s [%h]' v0.6.3..release/0.6.4
+
+* MRG: Merge tag 'v0.6.3' into develop [c1c2ef6]
+* BLD,BUG: pbm/static/brw: upgrade [7ff47be]
+* RLS: setup.py, __init__: v0.6.4 [5405e90]
+
+
+v0.6.3 (2016-04-28 18:37:59 -0500)
+----------------------------------
+::
+
+   git log --reverse --pretty=format:'* %s [%h]' v0.6.2..v0.6.3
 
 * MRG: Merge tag 'v0.6.2' into develop [449ad8b]
 * BUG,DOC: HISTORY.rst: escape \* [6e9f74d]
 * BUG,DOC: HISTORY.rst: escape \* [158ad09]
-* BLD: MANIFEST.in: recursive-include \* LICENSE* [251cb7e]
+* BLD: MANIFEST.in: recursive-include \* LICENSE\* [251cb7e]
 * BLD: MANIFEST.in: recursive-include pbm/templates \*.jinja [bd9a93a]
 * RLS: setup.py, __init__: v0.6.3 [d477d74]
 * BLD,BUG: Makefile: build, dist [d7b62a4]
+* DOC: HISTORY.rst: `git-changelog.py -r release/0.6.3 --hdr=- | pbcopy` [bd174ab]
+* MRG: Merge branch 'release/0.6.3' [d66f624]
 
 
 v0.6.2 (2016-04-28 18:18:06 -0500)
