@@ -4,24 +4,32 @@ History
 =======
 
 
-
-
-
-
-
-release/0.6.3 (2016-04-28 18:36:08 -0500)
+release/0.6.4 (2016-04-28 21:00:48 -0500)
 -----------------------------------------
 ::
 
-   git log --reverse --pretty=format:'* %s [%h]' v0.6.2..release/0.6.3
+   git log --reverse --pretty=format:'* %s [%h]' v0.6.3..release/0.6.4
+
+* MRG: Merge tag 'v0.6.3' into develop [c1c2ef6]
+* BLD,BUG: pbm/static/brw: upgrade [7ff47be]
+* RLS: setup.py, __init__: v0.6.4 [5405e90]
+
+
+v0.6.3 (2016-04-28 18:37:59 -0500)
+----------------------------------
+::
+
+   git log --reverse --pretty=format:'* %s [%h]' v0.6.2..v0.6.3
 
 * MRG: Merge tag 'v0.6.2' into develop [449ad8b]
 * BUG,DOC: HISTORY.rst: escape \* [6e9f74d]
 * BUG,DOC: HISTORY.rst: escape \* [158ad09]
-* BLD: MANIFEST.in: recursive-include \* LICENSE* [251cb7e]
-* BLD: MANIFEST.in: recursive-include pbm/templates \*.jinja [bd9a93a]
+* BLD: MANIFEST.in: recursive-include * LICENSE* [251cb7e]
+* BLD: MANIFEST.in: recursive-include pbm/templates *.jinja [bd9a93a]
 * RLS: setup.py, __init__: v0.6.3 [d477d74]
 * BLD,BUG: Makefile: build, dist [d7b62a4]
+* DOC: HISTORY.rst: `git-changelog.py -r release/0.6.3 --hdr=- | pbcopy` [bd174ab]
+* MRG: Merge branch 'release/0.6.3' [d66f624]
 
 
 v0.6.2 (2016-04-28 18:18:06 -0500)
@@ -46,7 +54,7 @@ v0.6.1 (2016-04-28 16:28:14 -0500)
 
 * MRG: Merge tag 'v0.6.0' into develop [c74bd7f]
 * BUG,DOC: HISTORY.rst: escape \* [d14de7c]
-* BLD: MANIFEST.in: recursive-include pbm/static \*.html \*.js [bd07338]
+* BLD: MANIFEST.in: recursive-include pbm/static *.html *.js [bd07338]
 * BLD: Makefile: release w/ twine because HTTPS [56a72d3]
 * RLS: setup.py, __init__: v0.6.1 [511ee6a]
 * DOC: HISTORY.rst: 'git-changelog.py -r release/0.6.1 --hdr=- | pbcopy' [d884851]
@@ -259,7 +267,7 @@ v0.2.2 (2014-12-13 17:33:12 -0600)
    git log --reverse --pretty=format:'* %s [%h]' v0.2.1..v0.2.2
 
 * Merge tag 'v0.2.1' into develop [d2390e9]
-* BLD: MANIFEST.in: exclude tests/data/\*.bkp [634235a]
+* BLD: MANIFEST.in: exclude tests/data/*.bkp [634235a]
 * RLS: setup.py version=0.2.2 [85b111e]
 * Merge branch 'release/0.2.2' [92b79d9]
 
