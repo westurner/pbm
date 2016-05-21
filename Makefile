@@ -123,3 +123,10 @@ print-all:
 
 print-by-date:
 	$(PROMIUMBOOKMARKS) --by-date $(CHROMIUM_BOOKMARKS)
+
+
+pull:
+	git pull
+
+push:
+	git push
