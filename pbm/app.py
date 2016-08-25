@@ -38,7 +38,9 @@ class MainHandler(BaseHandlerJinja):
     def get(self):
         ctxt = ({
             'current_user': self.current_user,
-            'urls': self._get_urls(self.current_user)})
+            'urls': self._get_urls(self.current_user),
+            'form_values': {}
+        })
         return self.render(self.template_path, **ctxt)
         #self.write(htmlstr)
 
@@ -70,12 +72,20 @@ class MainHandler(BaseHandlerJinja):
                  'url': '/bookmarks'},
                 {'name': 'bookmark links #json',
                  'url': '/bookmarks/chrome/links.json'},
+                {'name': 'starred bookmark links #json',
+                 'url': '/bookmarks/chrome/starred.json'},
                 {'name': 'brw',
                  'url': '/brw'},
                 {'name': 'brw original',
                  'url': '/static/brw/index.html'},
+                {'name': 'brw2: all links',
+                 'url': '/static/brw/brw2.html#!/bookmarks/chrome/links.json'},
+                {'name': 'brw2: starred',
+                 'url': '/static/brw/brw2.html#!/q.json?stars=1'},
                 {'name': 'bookmarks tree #json',
                  'url': '/bookmarks/chrome/json'},
+                {'name': 'search',
+                 'url': '/search'},
             ])
         urls.extend([
             {'name': 'about',
@@ -185,6 +195,96 @@ class BookmarksLinksJSONHandler(BookmarksBaseHandler):
         bookmark_urls = [b.get('url') for b in iter(self.cb)]
         self.write(tornado.escape.json_encode(bookmark_urls))
         self.set_header('content-type', 'application/json')
+
+
+import collections
+
+
+class BookmarksSearchJSONHandler(BookmarksBaseHandler):
+
+    @staticmethod
+    def iter_starred(cb, n_stars):
+        dedupe = collections.OrderedDict()
+        for bookmark in iter(cb):
+            url = bookmark.get('url')
+            if url.endswith('#'*n_stars):
+                url_without = url.rstrip('#')
+                dupelist = dedupe.setdefault(url_without, [])
+                dupelist.append(bookmark)
+        for key in dedupe:
+            urls = dedupe[key]
+            most_stars = urls[
+                sorted(
+                    ((len(bookmark.get('url', '')), i)
+                     for (i, bookmark) in enumerate(urls)),
+                    reverse=True)[0][1]]
+            yield most_stars
+
+    @staticmethod
+    def iter_stringmatch(cb, term):
+        for b in iter(cb):
+            if (
+                (term in b.get('url').lower())
+                or
+                (term in b.get('name').lower())):
+                yield b
+
+    @staticmethod
+    def iter_search(self, cb, **kwargs):
+        term = kwargs.get('q')
+        stars = kwargs.get('stars', 0)
+        if stars is None or stars < 0:
+            stars = 0
+        iterable = iter(cb)
+        iterable = self.iter_starred(iterable, stars)  # dedupe
+        if term:
+            iterable = self.iter_stringmatch(iterable, term)
+        return iterable
+
+    @staticmethod
+    def get_search_arguments(self):
+        term = self.get_argument('q', default=None)
+        try:
+            stars = int(self.get_argument('stars', default=0))
+        except AttributeError:
+            stars = None
+        return dict(q=term, stars=stars)
+
+    @tornado.web.authenticated
+    def get(self):
+        kwargs = self.get_search_arguments(self)
+        bookmark_urls = list(self.iter_search(self, iter(self.cb), **kwargs))
+        self.write(tornado.escape.json_encode(bookmark_urls))
+        self.set_header('content-type', 'application/json')
+
+
+import urllib
+
+
+class SearchHandler(BookmarksSearchJSONHandler):
+    template_path = 'search.jinja'
+
+    @tornado.web.authenticated
+    def get(self):
+        kwargs = self.get_search_arguments(self)
+        dest = self.get_argument('dest', default='html')
+        queryurl = '/q.json?' + urllib.urlencode(kwargs)
+        if dest == 'json':
+            self.redirect(queryurl)
+        elif dest == 'brw2':
+            self.redirect('/static/brw/brw2.html#!' + queryurl)
+        else:
+            iterable = self.iter_search(self, iter(self.cb), **kwargs)
+            t = utils.get_template(self.template_path)
+            form_values = kwargs.copy()
+            form_values['dest'] = dest
+            htmlstr = t.render({
+                'current_user': self.current_user,
+                'bookmarks_iter': iterable,
+                'form_values': form_values,
+                'queryurl': queryurl,
+                'range': range})
+            self.write(htmlstr)
 
 
 class BookmarksListHandler(BookmarksBaseHandler):
@@ -298,6 +398,9 @@ def make_app(config=None, DEFAULT_COOKIE_SECRET="."):
         (r"/bookmarks/chrome", BookmarksHandler),
         (r"/bookmarks/chrome/json", BookmarksJSONHandler),
         (r"/bookmarks/chrome/links.json", BookmarksLinksJSONHandler),
+        (r"/bookmarks/chrome/search.json", BookmarksSearchJSONHandler),
+        (r"/q.json", BookmarksSearchJSONHandler),
+        (r"/search", SearchHandler),
         (r"/bookmarks/chrome/list", BookmarksListHandler),
         (r"/bookmarks/chrome/tree", BookmarksTreeHandler),
     ], **_conf)

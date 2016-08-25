@@ -1,0 +1,20 @@
+
+<form action="/search">
+  <input type="text" name="q" placeholder="search"
+  {%- if form_values.get('q') %} value="{{form_values.q}}"{% endif %}></input>
+  <select name="stars">
+  {% for n in range(0,6) %}
+    <option value="{{n}}"
+    {%- if form_values.stars==n %} selected="selected"{% endif %}>{{n}}</option>
+  {% endfor %}
+  </select>
+
+  <select name="dest">
+  {% for dest in ["html", "brw2", "json"] %}
+    <option value="{{dest}}"
+    {%- if form_values.dest==dest %} selected="selected"{% endif %}>{{dest}}</option>
+  {% endfor %}
+  </select>
+
+  <button type="submit">search</button>
+</form>

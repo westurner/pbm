@@ -4,21 +4,29 @@
   <title>{% block title %}{% if page_title %}{{ page_title }}{% else %}home{% endif %}{% endblock %} | pbm</title>
   <style>
     h1, h2, h3, h4, h5, h6 { color: #878787; }
-    body { background-color: #f0f0f0; margin: 42px; margin-top: 24px; }
+    body { background-color: #f0f0f0; margin: 0px; margin-top: 24px; }
+    nav.navlinks_hdr,
+    div.container,
+    footer { padding: 0 24px; }
+    div.container { word-wrap: break-word; }
+    ul.bookmarks_list { padding-left: 18px; }
     span.bracket { color: #d0d0d0; vertical-align: middle; display: none; }
     ul.navlinks { list-style-type: none; padding-left: 0; }
-    ul.navlinks a { display: inline-block; word-wrap: none; width: 200px; }
+    ul.navlinks a { display: inline-block; word-wrap: none; }
+    ul.navlinks a.mainlinkL { width: 200px; }
+    ul.navlinks a.mainlinkR { }
     div#footer h1 { color: #BBBBBB; }
     // div#footer h1 a, footer h1 a { text-decoration: none !important; }
     div#footer h1 a:visited, footer h1 a:visited { color: inherit; }
+
   </style>
   {%- block extrahead_css %}
   <style>
-    div.navlinks_hdr ul {
+    nav.navlinks_hdr ul {
       list-style-type: none;
       padding-left: 0;
       }
-    div.navlinks_hdr ul li {
+    nav.navlinks_hdr ul li {
       display: inline-block;
       padding-right: 8px;
     }
@@ -31,12 +39,14 @@
 </head>
 <body>
 
+
 {%- block navlinks %}
-<div class="navlinks_hdr" >
+<nav class="navlinks_hdr" >
   <ul>
     <li><a href="/">home</a></li>
     <li><a href="/about">about</a></li>
     {% if current_user %}
+      <li><a href="/search">search</a>
       <li><a href="/logout" class="logout">logout</a>
         {#
         <span class="bracketx">[</span>
@@ -48,8 +58,9 @@
       <li><a href="/login">login</a></li>
     {% endif %}
   </ul>
-</div>
+</nav>
 {%- endblock navlinks %}
+<div class="container">
 {%- block body %}
 
 
@@ -64,9 +75,9 @@
 {%- for url in urls %}
 <li><div>
     <span class="bracket">[</span>
-    <a href="{{ url.url }}">{{ url.name }}</a>
+    <a class="mainlinkL" href="{{ url.url }}">{{ url.name }}</a>
     <span class="bracket">](</span>
-    <a href="{{ url.url }}">{{ url.url }}</a>
+    <a class="mainlinkR" href="{{ url.url }}">{{ url.url }}</a>
     <span class="bracket">)</span>
     </span>
 </li>
@@ -74,11 +85,14 @@
 </ul>
 </div>
 
+{% include 'bookmarks_search_partial.jinja' %}
+
 {%- endblock body %}
+</div>
 </body>
-<div id="footer">
+<footer id="footer">
 {%- block footer %}
   <h1><a href="/">pbm</a></h1>
 {%- endblock footer %}
-</div>
+</footer>
 </html>
