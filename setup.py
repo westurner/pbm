@@ -7,14 +7,14 @@ try:
 except ImportError:
     from distutils.core import setup
 
-
+__VERSION__ = '0.6.4'
 readme = open('README.rst').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 requirements = [
     'jinja2',
     'tornado',
-    #'jinja_tornado'
+    'jinja_tornado'
 ]
 
 test_requirements = [
@@ -26,7 +26,7 @@ test_requirements = [
 
 setup(
     name='pbm',
-    version='0.5.3',
+    version=__VERSION__,
     description=(
         'pbm works with Chromium bookmarks JSON.'),
     long_description=readme + '\n\n' + history,

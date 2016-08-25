@@ -70,14 +70,15 @@ test-readme:
 	pip install readme
 	python setup.py check -r -s
 
-release: clean test-readme
-	python setup.py sdist upload
-	python setup.py bdist_wheel upload
+build: clean test-readme
+	python setup.py build
 
-dist: clean
-	python setup.py sdist
-	python setup.py bdist_wheel
+dist: build
+	python setup.py sdist bdist_wheel
 	ls -l dist
+
+release: clean test-readme dist
+	twine upload dist/*
 
 # pbm Makefile
 ##############################################################################
@@ -122,3 +123,10 @@ print-all:
 
 print-by-date:
 	$(PROMIUMBOOKMARKS) --by-date $(CHROMIUM_BOOKMARKS)
+
+
+pull:
+	git pull
+
+push:
+	git push
