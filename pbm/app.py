@@ -35,6 +35,7 @@ class BaseHandlerJinja(JinjaTemplateMixin, BaseHandler):
 class MainHandler(BaseHandlerJinja):
     template_path = 'main.jinja'
 
+    @tornado.web.authenticated
     def get(self):
         ctxt = ({
             'current_user': self.current_user,
