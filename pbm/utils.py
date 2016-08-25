@@ -63,11 +63,11 @@ def json_default(o):
 
 
 def get_template(template):
-    env = jinja2.Environment(autoescape=True)
     loader = jinja2.FileSystemLoader(
         os.path.join(
             os.path.dirname(
                 os.path.abspath(__file__)),
             'templates'))
+    env = jinja2.Environment(loader=loader, autoescape=True)
     tmpl = loader.load(env, template)
     return tmpl
