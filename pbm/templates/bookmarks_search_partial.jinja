@@ -10,7 +10,7 @@
   </select>
 
   <select name="dest">
-  {% for dest in ["html", "brw2", "json"] %}
+  {% for dest in ["html", "brw", "json"] %}
     <option value="{{dest}}"
     {%- if form_values.dest==dest %} selected="selected"{% endif %}>{{dest}}</option>
   {% endfor %}

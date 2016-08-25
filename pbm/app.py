@@ -251,12 +251,19 @@ class BookmarksSearchJSONHandler(BookmarksBaseHandler):
             stars = None
         return dict(q=term, stars=stars)
 
-    @tornado.web.authenticated
-    def get(self):
+    def get_or_post(self):
         kwargs = self.get_search_arguments(self)
         bookmark_urls = list(self.iter_search(self, iter(self.cb), **kwargs))
         self.write(tornado.escape.json_encode(bookmark_urls))
         self.set_header('content-type', 'application/json')
+
+    @tornado.web.authenticated
+    def get(self):
+        return self.get_or_post()
+
+    @tornado.web.authenticated
+    def post(self):
+        return self.get_or_post()
 
 
 import urllib
@@ -265,14 +272,13 @@ import urllib
 class SearchHandler(BookmarksSearchJSONHandler):
     template_path = 'search.jinja'
 
-    @tornado.web.authenticated
-    def get(self):
+    def get_or_post(self):
         kwargs = self.get_search_arguments(self)
         dest = self.get_argument('dest', default='html')
         queryurl = '/q.json?' + urllib.urlencode(kwargs)
         if dest == 'json':
             self.redirect(queryurl)
-        elif dest == 'brw2':
+        elif dest == 'brw':
             self.redirect('/static/brw/brw2.html#!' + queryurl)
         else:
             iterable = self.iter_search(self, iter(self.cb), **kwargs)
@@ -286,6 +292,14 @@ class SearchHandler(BookmarksSearchJSONHandler):
                 'queryurl': queryurl,
                 'range': range})
             self.write(htmlstr)
+
+    @tornado.web.authenticated
+    def get(self):
+        return self.get_or_post()
+
+    @tornado.web.authenticated
+    def post(self):
+        return self.get_or_post()
 
 
 class BookmarksListHandler(BookmarksBaseHandler):

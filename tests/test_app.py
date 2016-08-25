@@ -30,10 +30,27 @@ def nop_auth(username="testuser"):
         BaseHandler.get_current_user = __get_current_user
 
 
+import urllib
+
+
 class Test_app(tornado.testing.AsyncHTTPTestCase):
 
     def get_app(self):
         return make_app()
+
+    def GET(self, url, data=None, headers=None):
+        data = data if data is not None else {}
+        headers = headers if headers is not None else {}
+        url_ = "{}?{}".format(url, urllib.urlencode(data))
+        return self.fetch(url_, method='GET', headers=headers)
+
+    def POST(self, url, data=None, headers=None):
+        data = data if data is not None else {}
+        headers = headers if headers is not None else {}
+        data['_xsrf'] = 'testtest'
+        body = urllib.urlencode(data)
+        headers['Cookie'] = "_xsrf=testtest"
+        return self.fetch(url, method='POST', headers=headers, body=body)
 
     def test_main_without_nop_auth(self):
         resp = self.fetch('/')
@@ -123,3 +140,106 @@ class Test_app(tornado.testing.AsyncHTTPTestCase):
                 pass
                 # TODO: skipif
 
+    def get_post_tst(self, url, data, func):
+        with nop_auth():
+            resp_get = self.GET(url, data)
+            func(self, resp_get)
+
+            resp_post = self.POST(url, data)
+            func(self, resp_post)
+
+    def test_search_00(self):
+        url = '/search'
+        data = {}
+
+        def testfunc(self, resp):
+            self.assertEqual(resp.code, 200)
+            self.assertIn('<title>search | pbm</title>', resp.body)
+            self.assertIn('upgrade', resp.body)
+            # TODO: this lists every bookmark
+        self.get_post_tst(url, data, testfunc)
+
+    def test_search_01_html(self):
+        url = '/search'
+        data = {'q': 'upgrade', 'dest': 'html'}
+
+        def testfunc(self, resp):
+            self.assertIn('<title>search | pbm</title>', resp.body)
+            self.assertIn('upgrade', resp.body)
+        self.get_post_tst(url, data, testfunc)
+
+    def test_search_02_json(self):
+        url = '/search'
+        data = {'q': 'upgrade', 'dest': 'json'}
+
+        def testfunc(self, resp):
+            self.assertEqual(resp.code, 200)
+            url = URLObject(resp.effective_url)
+            self.assertEqual(url.path, '/q.json')
+            self.assertEqual(url.query, 'q=upgrade&stars=0')
+        self.get_post_tst(url, data, testfunc)
+
+    def test_search_03_brw(self):
+        url = '/search'
+        data = {'q': 'upgrade', 'dest': 'brw'}
+
+        def testfunc(self, resp):
+            self.assertEqual(resp.code, 200)
+            url = URLObject(resp.effective_url)
+            self.assertEqual(url.path, '/static/brw/brw2.html')
+            self.assertEqual(url.fragment, '!/q.json?q=upgrade&stars=0')
+            self.assertIn('<title>brw2</title>', resp.body)
+        self.get_post_tst(url, data, testfunc)
+
+    def test_search_chrome_bookmarks_search_json(self):
+        url = '/bookmarks/chrome/search.json'
+        data = {}
+
+        def testfunc(self, resp):
+            self.assertEqual(resp.code, 200)
+        self.get_post_tst(url, data, testfunc)
+
+    def test_search_qjson_00(self):
+        url = '/q.json'
+        data = {}
+
+        def testfunc(self, resp):
+            self.assertEqual(resp.code, 200)
+            self.assertIn('upgrade', resp.body)
+        self.get_post_tst(url, data, testfunc)
+
+    def test_search_qjson_01_q(self):
+        url = '/q.json'
+        data = {'q': 'upgrade'}
+
+        def testfunc(self, resp):
+            self.assertEqual(resp.code, 200)
+            self.assertIn('upgrade', resp.body)
+        self.get_post_tst(url, data, testfunc)
+
+    def test_search_qjson_02_stars(self):
+        url = '/q.json'
+        data = {'stars': 3}
+
+        def testfunc(self, resp):
+            self.assertEqual(resp.code, 200)
+            self.assertIn('https://wrdrd.github.io/####', resp.body)
+        self.get_post_tst(url, data, testfunc)
+
+    def test_search_qjson_03_q_stars(self):
+        url = '/q.json'
+        data = {'q': 'zero', 'stars': 3}
+
+        def testfunc(self, resp):
+            self.assertEqual(resp.code, 200)
+            self.assertEqual('[]', resp.body)
+        self.get_post_tst(url, data, testfunc)
+
+    def test_search_qjson_04_q_stars(self):
+        url = '/q.json'
+        data = {'q': '', 'stars': 0}
+
+        def testfunc(self, resp):
+            self.assertEqual(resp.code, 200)
+            self.assertIn('upgrade', resp.body)
+        self.get_post_tst(url, data, testfunc)
