@@ -2,9 +2,10 @@
 {%- for b in bookmarks_iter %}
 <li id="#b-{{ b.id }}" class="bookmark {{ b.type }}" typeof="#Bookmark">
 <meta property="type" content="{{ b.type }}"></meta>
-<span class="b-name" property="name"><a href="{{ b.url }}" title="{{ b.url }}">{{ b.name }}</a></span>
+<span class="b-brw"><a href="/static/brw/brw2.html{% if queryurl %}#={{ queryurl }};;{% endif %}##{{ b.url }}" target="{{queryurl}}" title="{{ b.url }}">##</a></span>
+<span class="b-name" property="name"><a href="{{ b.url }}" rel="noopener noreferer" target="_blank" title="{{ b.url }}">{{ b.name }}</a></span>
 <br>
-<span class="b-url" property="name"><a href="{{ b.url }}" title="{{ b.name }}">{{ b.url }}</a></span>
+<span class="b-url" property="name"><a href="{{ b.url }}" rel="noopener noreferer" target="_blank" title="{{ b.name }}">{{ b.url }}</a></span>
 <link rev="pb:children" src="#000"/>
 </li>
 {%- endfor %}
