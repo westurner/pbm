@@ -2,14 +2,27 @@
 pbm
 ===============================
 
-.. image:: https://badge.fury.io/py/pbm.png
-    :target: http://badge.fury.io/py/pbm
+.. image:: https://img.shields.io/pypi/v/pbm.svg
+    :target: https://pypi.python.org/pypi/pbm
 
-.. .. image:: https://travis-ci.org/westurner/pbm.png?branch=master
-..        :target: https://travis-ci.org/westurner/pbm
+.. image:: https://img.shields.io/pypi/l/pbm.svg
+    :target: https://pypi.python.org/pypi/pbm
 
-.. image:: https://pypip.in/d/pbm/badge.png
-        :target: https://pypi.python.org/pypi/pbm
+.. image:: https://img.shields.io/pypi/wheel/pbm.svg
+    :target: https://pypi.python.org/pypi/pbm
+
+.. image:: https://img.shields.io/pypi/pyversions/pbm.svg
+    :target: https://pypi.python.org/pypi/pbm
+
+.. image:: https://travis-ci.org/westurner/pbm.svg?branch=master
+    :target: https://travis-ci.org/westurner/pbm
+
+.. image:: https://codecov.io/github/westurner/pbm/coverage.svg?branch=master
+    :target: https://codecov.io/github/westurner/pbm
+    :alt: codecov.io
+
+.. image:: https://img.shields.io/badge/Say%20Thanks!-🦉-1EAEDB.svg
+    :target: https://saythanks.io/to/westurner
 
 
 pbm works with Chrome and Chromium bookmarks JSON.
