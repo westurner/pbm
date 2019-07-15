@@ -153,7 +153,7 @@ class StarredFolderPlugin(pbm.plugins.PromiumPlugin):
         latest = None
         for base_url, bookmarks_list in base_url_map.items():
             bookmark_dict = cls.get_starred_bookmark(bookmarks_list)
-            bookmark_dict['id'] = bookmarks_obj.ids.next()
+            bookmark_dict['id'] = next(bookmarks_obj.ids)
             bookmarks_urls.append(bookmark_dict)
 
             date_added = bookmark_dict.get('date_added')
@@ -170,6 +170,6 @@ class StarredFolderPlugin(pbm.plugins.PromiumPlugin):
             'date_added': latest_date_added,
             'date_modified': latest.get('date_modified') if latest else None,
             'children': bookmarks_urls[::-1],  # show latest (in sequence) first
-            'id': bookmarks_obj.ids.next(),
+            'id': next(bookmarks_obj.ids),
         }
         return output

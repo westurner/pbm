@@ -127,7 +127,7 @@ class DateBasedFoldersPlugin(pbm.plugins.PromiumPlugin):
                 datetime.datetime(int(year), 1, 1))
             year_folder = {
                 "type": "folder",
-                "id": ids.next(),
+                "id": next(ids),
                 "name": str(year),
                 "children": [],
                 "date_added": _date,
@@ -138,7 +138,7 @@ class DateBasedFoldersPlugin(pbm.plugins.PromiumPlugin):
                     datetime.datetime(int(year), int(month[-1]), 1))
                 month_folder = {
                     "type": "folder",
-                    "id": ids.next(),
+                    "id": next(ids),
                     "name": '-'.join(str(s) for s in month),
                     "children": [],
                     "date_added": _date,
@@ -149,7 +149,7 @@ class DateBasedFoldersPlugin(pbm.plugins.PromiumPlugin):
                         datetime.datetime(int(year), int(month[-1]), int(day[-1])))
                     day_folder = {
                         "type": "folder",
-                        "id": ids.next(),
+                        "id": next(ids),
                         "name": '-'.join(str(s) for s in day),
                         "children": [],
                         "date_added": _date,

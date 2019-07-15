@@ -44,7 +44,7 @@ class BookmarkletsFolderPlugin(pbm.plugins.PromiumPlugin):
         for d in self.default_bookmarklets:
             yield {
                 "type": 'url',
-                "id": ids.next(),
+                "id": next(ids),
                 "name": d['name'],
                 "url": d['url'],
                 "date_added": date_added,

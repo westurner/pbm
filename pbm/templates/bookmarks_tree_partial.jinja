@@ -11,7 +11,7 @@ xmlns:pb="#"
 about="#000"
 typeof="pb:BookmarksTree">
 {%- set roots=bookmarks.bookmarks_dict['roots'] %}
-{%- set folder_keys = roots.keys() %}
+{%- set folder_keys = roots.keys() | list %}
 {%- set _ = (('bookmark_bar' in folder_keys)
           and folder_keys.remove('bookmark_bar')
           or folder_keys.insert(0, 'bookmark_bar')) %}

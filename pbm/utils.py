@@ -2,9 +2,12 @@
 
 import datetime
 import os.path
+import sys
 
 import jinja2
 
+if sys.version_info.major > 2:
+    long = int
 
 DATETIME_CONST = 2**8 * 3**3 * 5**2 * 79 * 853
 
@@ -13,7 +16,10 @@ def longdate_to_datetime(t_long):
     if t_long is None:
         return
     t_long = long(t_long)
-    return datetime.datetime.utcfromtimestamp((t_long * 1e-6) - DATETIME_CONST)
+    timestamp = (t_long * 1e-6) - DATETIME_CONST
+    if timestamp < 0:
+        return
+    return datetime.datetime.utcfromtimestamp(timestamp)
 
 
 def unix_time(dt):

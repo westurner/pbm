@@ -8,6 +8,7 @@ test_pbm
 Tests for `pbm` module.
 """
 
+import sys
 import unittest
 
 import pbm
@@ -21,6 +22,17 @@ import logging
 log = logging.getLogger(__name__)
 
 pbm
+
+
+if sys.version_info.major == 2:
+    def iteritems(obj):
+        return obj.iteritems()
+else:
+    def iteritems(obj):
+        return obj.items()
+
+    long = int
+
 
 class TestPromiumbookmarks(unittest.TestCase):
 
@@ -43,14 +55,39 @@ class TestPromiumbookmarks(unittest.TestCase):
 
     def test_01_list_bookmarks(self):
         from pbm.main import list_profile_bookmarks
-        output = list_profile_bookmarks()
-        self.assertTrue(hasattr(output, '__iter__'))
-        output = list(output)
-        self.assertTrue(len(output))
-        output = list_profile_bookmarks(show_backups=True)
-        self.assertTrue(hasattr(output, '__iter__'))
-        output = list(output)
-        self.assertTrue(len(output))
+        try:
+            testdir = os.path.expanduser("~/.config/chromium/pbmtests")
+            testpath = os.path.expanduser(os.path.join(testdir, "Bookmarks"))
+            os.makedirs(testdir)
+            with open(testpath, 'w') as f:
+                f.write('')
+            output = list_profile_bookmarks()
+            self.assertTrue(hasattr(output, '__iter__'))
+            output = list(output)
+            self.assertTrue(len(output))
+        finally:
+            if os.path.exists(testpath):
+                os.remove(testpath)
+            if os.path.exists(testdir):
+                os.rmdir(testdir)
+
+    def test_02_list_bookmarks__show_backups(self):
+        from pbm.main import list_profile_bookmarks
+        try:
+            testdir = os.path.expanduser("~/.config/chromium/pbmtests")
+            testpath = os.path.expanduser(os.path.join(testdir, "Bookmarks"))
+            os.makedirs(testdir)
+            with open(testpath, 'w') as f:
+                f.write('')
+            output = list_profile_bookmarks(show_backups=True)
+            self.assertTrue(hasattr(output, '__iter__'))
+            output = list(output)
+            self.assertTrue(len(output))
+        finally:
+            if os.path.exists(testpath):
+                os.remove(testpath)
+            if os.path.exists(testdir):
+                os.rmdir(testdir)
 
     def test_11_read_bookmarks(self):
         from pbm.main import ChromiumBookmarks
@@ -68,7 +105,7 @@ class TestPromiumbookmarks(unittest.TestCase):
         length = len(bookmarks)
         self.log(('n', length))
         counts = collections.Counter(b.get('id') for b in bookmarks)
-        duplicates = [(k, v) for (k, v) in counts.iteritems() if v > 1]
+        duplicates = [(k, v) for (k, v) in iteritems(counts) if v > 1]
         self.log(("duplicate id counts:", repr(duplicates)))
         #self.assertFalse(duplicates)
 
@@ -182,7 +219,7 @@ class TestPromiumbookmarks(unittest.TestCase):
         ]
         _plugins = plugins.PluginSequence.load_plugins(
             pluginstrs=[])
-        self.assertEqual(_plugins, [])
+        self.assertEqual(list(_plugins), [])
 
         _plugins = plugins.PluginSequence.load_plugins(
             pluginstrs=DEFAULT_PLUGINS)

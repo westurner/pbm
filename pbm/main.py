@@ -31,6 +31,9 @@ import sys
 
 from collections import namedtuple
 
+if sys.version_info.major > 2:
+    unicode = str
+
 import pbm.app
 import pbm.utils as utils
 import pbm.plugins as plugins
@@ -100,7 +103,7 @@ class URL(
             value = getattr(self, x)
             if value:
                 yield u'# %-5s: %s' % (x, value)
-        yield self.url
+        yield unicode(self.url)
 
     def to_console_str(self):
         return u'\n'.join(self._to_console_strs())
@@ -269,7 +272,7 @@ class ChromiumBookmarks(object):
         bookmarks_obj = self
         date_added = pbm.utils.get_datetime_now_longdate()
         log.debug('add folder: %r', folder_name)
-        id_ = bookmarks_obj.ids.next()
+        id_ = next(bookmarks_obj.ids)
         log.debug('id: %r', id_)
         default_folder = collections.OrderedDict((
             ("type", 'folder'),
@@ -799,10 +802,11 @@ def main(argv=None,
     args = argv and list(argv) or sys.argv[1:]
     (opts, args) = prs.parse_args(args)
 
-    if stdout is None:
-        stdout = codecs.getwriter('utf8')(sys.stdout)
-    if stderr is None:
-        stderr = codecs.getwriter('utf8')(sys.stderr)
+    if sys.version_info.major < 3:
+        if stdout is None:
+            stdout = codecs.getwriter('utf8')(sys.stdout)
+        if stderr is None:
+            stderr = codecs.getwriter('utf8')(sys.stderr)
 
     if not opts.quiet:
         logging.basicConfig()
@@ -848,7 +852,7 @@ def main(argv=None,
         if opts.print_all:
             for bookmark in bookmarks_iter:
                 url = URL.from_dict(bookmark)
-                print(url.to_console_str(), file=stdout)
+                print(unicode(url.to_console_str()), file=stdout)
                 print("# --------------------", file=stdout)
 
         elif opts.print_json_link_list:

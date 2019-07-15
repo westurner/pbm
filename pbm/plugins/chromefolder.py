@@ -34,7 +34,7 @@ class ChromeFolderPlugin(pbm.plugins.PromiumPlugin):
         return [({
             "type": 'url',
             "url": url,
-            "id": ids.next(),
+            "id": next(ids),
             "name": url,
             "date_added": date_added,
             "date_modified": date_added,

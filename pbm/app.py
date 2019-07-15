@@ -8,6 +8,12 @@ pbm/app.py -- pbmweb
 import json
 import logging
 import os.path
+import sys
+
+if sys.version_info.major == 2:
+    from urllib import urlencode, quote
+else:
+    from urllib.parse import urlencode, quote
 
 import tornado
 import tornado.web
@@ -275,14 +281,14 @@ class SearchHandler(BookmarksSearchJSONHandler):
     def get_or_post(self):
         kwargs = self.get_search_arguments(self)
         dest = self.get_argument('dest', default='html')
-        queryurl = '/q.json?' + urllib.urlencode(kwargs)
+        queryurl = '/q.json?' + urlencode(kwargs)
         if dest == 'json':
             self.redirect(queryurl)
         elif dest == 'brw':
             self.redirect('/static/brw/brw2.html#!' + queryurl)
         else:
             iterable = self.iter_search(self, iter(self.cb), **kwargs)
-            t = utils.get_template(self.template_path)
+            t = pbm.utils.get_template(self.template_path)
             form_values = kwargs.copy()
             form_values['dest'] = dest
             htmlstr = t.render({
@@ -307,7 +313,7 @@ class BookmarksListHandler(BookmarksBaseHandler):
 
     @tornado.web.authenticated
     def get(self):
-        t = utils.get_template(self.template_path)
+        t = pbm.utils.get_template(self.template_path)
         htmlstr = t.render({
             'bookmarks': self.cb,
             'bookmarks_iter': iter(self.cb)})
@@ -316,7 +322,10 @@ class BookmarksListHandler(BookmarksBaseHandler):
 
 def format_longdate(longdate):
     if longdate:
-        return pbm.utils.longdate_to_datetime(longdate).isoformat() + "Z"
+        dt = pbm.utils.longdate_to_datetime(longdate)
+        if dt:
+            return dt.isoformat() + "Z"
+        return longdate
     return longdate
 
 
@@ -337,7 +346,7 @@ def rdf_uri_escape(url):
     def _quote_URI_chars(url):
         for char in url:
             if char in RDF_URI_QUOTECHARS_DICT:
-                yield urllib.quote(char)
+                yield quote(char)
             else:
                 yield char
     return u''.join(_quote_URI_chars(url))
@@ -348,7 +357,7 @@ class BookmarksTreeHandler(BookmarksBaseHandler):
 
     @tornado.web.authenticated
     def get(self):
-        t = utils.get_template(self.template_path)
+        t = pbm.utils.get_template(self.template_path)
         htmlstr = t.render({
             'bookmarks': self.cb,
             'bookmarks_iter': iter(self.cb),
@@ -362,7 +371,7 @@ class BookmarksHandler(BaseHandler):
 
     @tornado.web.authenticated
     def get(self):
-        t = utils.get_template(self.template_path)
+        t = pbm.utils.get_template(self.template_path)
         htmlstr = t.render()
         self.write(htmlstr)
 
@@ -371,7 +380,7 @@ class BrwHandler(BaseHandler):
 
     @tornado.web.authenticated
     def get(self):
-      t = utils.get_template(self.template_path)
+      t = pbm.utils.get_template(self.template_path)
       htmlstr = t.render()
       self.write(htmlstr)
 

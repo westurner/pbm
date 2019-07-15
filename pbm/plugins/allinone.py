@@ -17,7 +17,7 @@ class AdditionalAllFolderPlugin(pbm.plugins.PromiumPlugin):
 
         bookmarks_dict['roots'].setdefault('other', {
             'type': 'folder',
-            'id': bookmarks_obj.ids.next(),
+            'id': next(bookmarks_obj.ids),
             'date_added': pbm.utils.get_datetime_now_longdate(),
             'date_modified': pbm.utils.get_datetime_now_longdate(),
             'name': 'Other Bookmarks',
@@ -30,7 +30,7 @@ class AdditionalAllFolderPlugin(pbm.plugins.PromiumPlugin):
     def duplicate_list(self, bookmarks_obj):
         for bookmark in bookmarks_obj.bookmarks_list:
             b = bookmark.copy()
-            b['id'] = bookmarks_obj.ids.next()
+            b['id'] = next(bookmarks_obj.ids)
             yield b
 
     def postprocess_bookmarks(self, bookmarks_obj):
@@ -40,7 +40,7 @@ class AdditionalAllFolderPlugin(pbm.plugins.PromiumPlugin):
         datetime_current = pbm.utils.get_datetime_now_longdate()
         all_folder = (
             {'type': 'folder',
-             'id': bookmarks_obj.ids.next(),
+             'id': next(bookmarks_obj.ids),
              'name': 'all',
              'children': list(self.duplicate_list(bookmarks_obj)),
              'date_added': datetime_current,
