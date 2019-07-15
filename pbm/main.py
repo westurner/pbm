@@ -642,7 +642,7 @@ def get_chromedir(platform, release):
     if platform == 'darwin':
         chromedir = os.path.expanduser(
             '~/Library/Application Support/Google/Chrome')
-    elif platform.startswith('linux2'):
+    elif platform.startswith('linux'):
         chromedir = os.path.expanduser(
             '~/.config/google-chrome')
         chromedirs = [chromedir,
