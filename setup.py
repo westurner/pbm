@@ -22,6 +22,7 @@ test_requirements = [
     'jinja2',
     'urlobject',
     'rdflib',
+    'html5lib'
 ]
 
 setup(
