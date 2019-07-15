@@ -16,7 +16,7 @@ import tornado.ioloop
 from jinja_tornado import JinjaApp, JinjaTemplateMixin
 
 import pbm.main
-import utils
+import pbm.utils
 
 log = logging.getLogger('pbm.app')
 
@@ -324,7 +324,7 @@ import urllib
 
 
 def build_rdf_uri_quotechars_dict():
-    quotechars = [chr(n) for n in xrange(0x0, 0x20)]
+    quotechars = [chr(n) for n in range(0x0, 0x20)]
     quotechars += [c for c in """ <>"{}|^`\\"""]
     return dict.fromkeys(quotechars)
 
