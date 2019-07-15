@@ -650,10 +650,10 @@ def get_chromedir(platform, release):
     elif platform == 'win32':
         if release == 'XP':
             chromedir = os.path.expanduser(
-                '~\Local Settings\Application Data\Google\Chrome\User Data')
+                r'~\Local Settings\Application Data\Google\Chrome\User Data')
         else:
             chromedir = os.path.expanduser(
-                '~\AppData\Local\Google\Chrome\User Data')
+                r'~\AppData\Local\Google\Chrome\User Data')
     else:
         raise NotImplementedError("Unknown platform: %r" % platform)
     if chromedirs:
@@ -680,10 +680,10 @@ def get_chromiumdir(platform, release):
     elif platform == 'win32':
         if release == 'XP':
             chromedir = os.path.expanduser(
-                '~\Local Settings\Application Data\Chromium\User Data')
+                r'~\Local Settings\Application Data\Chromium\User Data')
         else:
             chromedir = os.path.expanduser(
-                '~\AppData\Local\Chromium\User Data')
+                r'~\AppData\Local\Chromium\User Data')
     else:
         raise NotImplementedError("Unknown platform: %r" % platform)
     return [chromedir]
