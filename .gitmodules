@@ -1,3 +1,6 @@
 [submodule "pbm/static/brw"]
 	path = pbm/static/brw
 	url = https://github.com/westurner/brw
+[submodule "src/jinja_tornado"]
+	path = src/jinja_tornado
+        url = https://github.com/westurner/jinja_tornado
