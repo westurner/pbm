@@ -44,7 +44,8 @@ lint:
 test:
 	# python setup.py test
 	#$(PROMIUMBOOKMARKS) -t
-	nosetests ./tests/test_pbm.py ./tests/test_app.py
+	#nosetests ./tests/test_pbm.py ./tests/test_app.py
+	pytest -v ./tests/test_pbm.py ./tests/test_app.py
 
 nosetest:
 	nosetests --with-coverage ./pbm.py
