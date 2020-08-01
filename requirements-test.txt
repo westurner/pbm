@@ -1,3 +1,5 @@
-nose
+pytest-cov
 urlobject
 rdflib
+pyRDFa3
+html5lib
