@@ -64,6 +64,15 @@ class URL(
         x.pop('date_modified_')
         return x
 
+    def to_csv_row(self):
+        x = self._asdict()
+        x.pop('date_added_')
+        x.pop('date_modified_')
+        return tuple(
+            (x.replace('"', '\"') if hasattr(x, 'replace') else x)
+            for x in x.values())
+
+
     @classmethod
     def from_dict(cls, node, **kwargs):
         return cls(
@@ -746,6 +755,9 @@ def get_option_parser():
     prs.add_option('-p', '--print-all',
                    dest='print_all',
                    action='store_true')
+    prs.add_option('--print-csv',
+                   dest='print_csv',
+                   action='store_true')
 
     prs.add_option('--print-json-link-list',
                    dest='print_json_link_list',
@@ -837,7 +849,8 @@ def main(argv=None,
 
     if (opts.print_all
             or opts.print_json_link_list
-            or opts.print_html_tree):
+            or opts.print_html_tree
+            or opts.print_csv):
         if opts.sort_by_date:
             sorted_bookmarks = sorted(
                 cb,
@@ -872,6 +885,11 @@ def main(argv=None,
                 'format_longdate': pbm.app.format_longdate,
                 'rdf_uri_escape': pbm.app.rdf_uri_escape})
             print(htmlstr, file=stdout)
+
+        if opts.print_csv:
+            for bookmark in bookmarks_iter:
+                url = URL.from_dict(bookmark)
+                print(url.to_csv_row())
 
     if opts.organize:
         cb.organize(prompt=(not opts.skip_prompt))
