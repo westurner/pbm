@@ -17,10 +17,10 @@ class BookmarkletsFolderPlugin(pbm.plugins.PromiumPlugin):
     folder_name = 'bookmarklets'
     default_bookmarklets = [
         {"url":
-            'data:text/html, <html style="font-family:Helvetica; background: #333; width: 400px; margin: 0 auto; color: white;" contenteditable><title>todo</title>==================<br>todo<br>==================<br>.',
+            'data:text/html, <html style="font-family:Helvetica; background: rgb(32,32,32); width: 400px; margin: 0 auto; color: white;" contenteditable><title>todo</title>==================<br>todo<br>==================<br>.',
             "name": "notetab (400px)"},
         {"url":
-            'data:text/html, <html style="font-family:Helvetica; background: #333; width: 800px; margin: 0 auto; color: white;" contenteditable><title>todo</title>==================<br>todo<br>==================<br>.',
+            'data:text/html, <html style="font-family:Helvetica; background: rgb(32,32,32); width: 800px; margin: 0 auto; color: white;" contenteditable><title>todo</title>==================<br>todo<br>==================<br>.',
             "name": "notetab (800px)"},
         {"url":
             'javascript:function iprl5()%7Bvar d%3Ddocument,z%3Dd.createElement(%27scr%27%2B%27ipt%27),b%3Dd.body,l%3Dd.location%3Btry%7Bif(!b)throw(0)%3Bz.setAttribute(%27src%27,%27https://dabble.me/cast/bookmarklet.js%3F%27%2B(new Date().getTime()))%3Bb.appendChild(z)%3B%7Dcatch(e)%7Balert(%27Please wait until the page has loaded.%27)%3B%7D%7Diprl5()%3Bvoid(0)',
